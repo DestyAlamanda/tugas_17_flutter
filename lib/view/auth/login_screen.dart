@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:tugas_17_flutter/home.dart';
-import 'package:tugas_17_flutter/register_screen.dart';
+import 'package:tugas_17_flutter/view/auth/register_screen.dart';
+import 'package:tugas_17_flutter/view/home/home.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/absen.dart';
-import 'package:tugas_17_flutter/home.dart';
+import 'package:tugas_17_flutter/view/home/home.dart';
 
 class BottomNavigator extends StatefulWidget {
   const BottomNavigator({super.key});
@@ -27,7 +27,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF1A2A80),
+        backgroundColor: Color(0xFF469EA0),
         onPressed: () {
           // contoh navigasi ke halaman lain
           Navigator.push(
@@ -39,9 +39,9 @@ class _BottomNavigatorState extends State<BottomNavigator> {
       ),
 
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.grey[50],
+        backgroundColor: Colors.grey[900],
         currentIndex: _selectedIndex,
-        selectedItemColor: const Color(0xFF1A2A80),
+        selectedItemColor: const Color(0xFF469EA0),
         unselectedItemColor: Colors.grey,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: const [
