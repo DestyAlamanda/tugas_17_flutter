@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tugas_17_flutter/api/auth_api.dart';
+import 'package:tugas_17_flutter/model/batch.dart';
+import 'package:tugas_17_flutter/model/training.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -8,402 +11,339 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  bool _isPasswordVisible = false;
-  bool _isConfirmPasswordVisible = false;
   final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  List<Batch> _batches = [];
+  List<Training> _trainings = [];
+  Batch? _selectedBatch;
+  Training? _selectedTraining;
+
+  String? _selectedGender;
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
+  bool _isDataLoading = true;
+
+  final AuthenticationAPI _authService = AuthenticationAPI();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDropdownData();
+  }
+
+  Future<void> _fetchDropdownData() async {
+    try {
+      final batches = await _authService.getBatches();
+      final trainings = await _authService.getTrainings();
+      if (mounted) {
+        setState(() {
+          _batches = batches;
+          _trainings = trainings;
+          _isDataLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal memuat data: ${e.toString()}')),
+        );
+        setState(() => _isDataLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (_selectedGender == null ||
+        _selectedBatch == null ||
+        _selectedTraining == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Lengkapi semua data!')));
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final response = await AuthenticationAPI.registerUser(
+        name: _nameController.text,
+        email: _emailController.text,
+        password: _passwordController.text,
+        jenisKelamin: _selectedGender!,
+        batchId: _selectedBatch!.id,
+        trainingId: _selectedTraining!.id,
+      );
+
+      if (mounted) {
+        final message = response.message ?? 'Registrasi berhasil!';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), backgroundColor: Colors.green),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40, vertical: 80),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Create Account",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
+      body: _isDataLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 40,
+                  vertical: 80,
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Create Account",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      "Sign up to get started",
-                      style: TextStyle(fontSize: 14, color: Color(0xFF888888)),
-                    ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Sign up to get started",
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                      const SizedBox(height: 25),
 
-                    SizedBox(height: 25),
+                      // Full Name
+                      _buildLabel("Full Name"),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _nameController,
+                        keyboardType: TextInputType.name,
+                        decoration: _inputDecoration("Masukkan nama lengkap"),
+                        validator: (value) => value == null || value.isEmpty
+                            ? 'Nama tidak boleh kosong'
+                            : null,
+                      ),
+                      const SizedBox(height: 25),
 
-                    // Full Name Input
-                    Text(
-                      'Full Name',
-                      style: TextStyle(
-                        color: Color(0xff888888),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                      // Email
+                      _buildLabel("Email"),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: _inputDecoration("Masukkan email"),
+                        validator: (value) {
+                          if (value == null || value.isEmpty)
+                            return 'Email tidak boleh kosong';
+                          if (!RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value)) {
+                            return 'Format email tidak valid';
+                          }
+                          return null;
+                        },
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      keyboardType: TextInputType.name,
-                      decoration: InputDecoration(
-                        hintText: "Masukkan nama lengkap",
-                        hintStyle: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Full name cannot be empty';
-                        } else if (value.length < 2) {
-                          return 'Full name must be at least 2 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 25),
+                      const SizedBox(height: 25),
 
-                    // Email Input
-                    Text(
-                      'Email',
-                      style: TextStyle(
-                        color: Color(0xff888888),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                      // Password
+                      _buildLabel("Password"),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: !_isPasswordVisible,
+                        decoration: _inputDecoration("Masukkan kata sandi")
+                            .copyWith(
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(
+                                    () => _isPasswordVisible =
+                                        !_isPasswordVisible,
+                                  );
+                                },
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty)
+                            return 'Password tidak boleh kosong';
+                          if (value.length < 6)
+                            return 'Password minimal 6 karakter';
+                          return null;
+                        },
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      keyboardType: TextInputType.phone,
-                      decoration: InputDecoration(
-                        hintText: "Masukkan nama email",
-                        hintStyle: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email tidak boleh kosong';
-                        } else if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(value)) {
-                          return 'Format email tidak valid';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 25),
+                      const SizedBox(height: 25),
 
-                    // Password Input
-                    Text(
-                      'Password',
-                      style: TextStyle(
-                        color: Color(0xff888888),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
+                      // Dropdown Pelatihan
+                      _buildLabel("Pelatihan"),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<Training>(
+                        initialValue: _selectedTraining,
+                        decoration: _inputDecoration("Pilih Pelatihan"),
+                        items: _trainings.map((training) {
+                          return DropdownMenuItem<Training>(
+                            value: training,
+                            child: Text(training.title),
+                          );
+                        }).toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedTraining = val),
+                        validator: (val) =>
+                            val == null ? 'Pelatihan harus dipilih' : null,
                       ),
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      keyboardType: TextInputType.visiblePassword,
-                      obscureText: !_isPasswordVisible,
-                      decoration: InputDecoration(
-                        hintText: "Masukkan kata sandi",
-                        hintStyle: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _isPasswordVisible = !_isPasswordVisible;
-                            });
-                          },
-                          icon: Icon(
-                            _isPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.grey,
+                      const SizedBox(height: 25),
+
+                      // Dropdown Batch
+                      _buildLabel("Batch"),
+                      const SizedBox(height: 8),
+                      DropdownButtonFormField<Batch>(
+                        initialValue: _selectedBatch,
+                        decoration: _inputDecoration("Pilih Batch"),
+                        items: _batches.map((batch) {
+                          return DropdownMenuItem<Batch>(
+                            value: batch,
+                            child: Text(batch.batchKe),
+                          );
+                        }).toList(),
+                        onChanged: (val) =>
+                            setState(() => _selectedBatch = val),
+                        validator: (val) =>
+                            val == null ? 'Batch harus dipilih' : null,
+                      ),
+                      const SizedBox(height: 25),
+
+                      // Dropdown Gender
+                      const SizedBox(height: 8),
+                      Text('Jenis Kelamin', style: TextStyle(fontSize: 14)),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text(
+                                'Laki-laki',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              value: 'L',
+                              groupValue: _selectedGender,
+                              onChanged: (v) =>
+                                  setState(() => _selectedGender = v),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                          Expanded(
+                            child: RadioListTile<String>(
+                              title: const Text(
+                                'Perempuan',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              value: 'P',
+                              groupValue: _selectedGender,
+                              onChanged: (v) =>
+                                  setState(() => _selectedGender = v),
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 30),
+
+                      // Register Button
+                      ElevatedButton(
+                        onPressed: _isLoading ? null : _handleRegister,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xff21BDCA),
+                          fixedSize: const Size(327, 56),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(6),
                           ),
                         ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Password cannot be empty';
-                        } else if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 25),
-
-                    // Confirm Password Input
-                    Text(
-                      'Confirm Password',
-                      style: TextStyle(
-                        color: Color(0xff888888),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    TextFormField(
-                      keyboardType: TextInputType.visiblePassword,
-                      obscureText: !_isConfirmPasswordVisible,
-                      decoration: InputDecoration(
-                        hintText: "Konfirmasi kata sandi",
-                        hintStyle: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey,
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        suffixIcon: IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _isConfirmPasswordVisible =
-                                  !_isConfirmPasswordVisible;
-                            });
-                          },
-                          icon: Icon(
-                            _isConfirmPasswordVisible
-                                ? Icons.visibility
-                                : Icons.visibility_off,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Confirm password cannot be empty';
-                        }
-                        // Note: In real implementation, you should compare with actual password field
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: 30),
-
-                    // Register Button
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Navigate to success page or show success message
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                "Registration Success",
-                                textAlign: TextAlign.center,
+                        child: _isLoading
+                            ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                            : const Text(
+                                "Sign Up",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
                               ),
-                              backgroundColor: Color(0xff21BDCA),
-                            ),
-                          );
-                          // You can navigate to login page or home page here
-                          Navigator.pop(context);
-                        } else {
-                          showDialog(
-                            context: context,
-                            builder: (context) {
-                              return AlertDialog(
-                                title: Text("Registration Failed"),
-                                content: Text(
-                                  "Please fill all required fields correctly",
-                                ),
-                                backgroundColor: Colors.grey[100],
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text("OK"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xff21BDCA),
-                        fixedSize: Size(327, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        elevation: 0,
                       ),
-                      child: Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 30),
+                      const SizedBox(height: 30),
 
-                    // Divider
-                    // Row(
-                    //   children: [
-                    //     Expanded(child: Divider()),
-                    //     Padding(
-                    //       padding: EdgeInsets.symmetric(horizontal: 8.0),
-                    //       child: Text(
-                    //         'Or Sign Up With',
-                    //         style: TextStyle(
-                    //           color: Color(0xff888888),
-                    //           fontSize: 12,
-                    //           fontWeight: FontWeight.w400,
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     Expanded(child: Divider()),
-                    //   ],
-                    // ),
-
-                    // SizedBox(height: 30),
-
-                    // Social Media Buttons
-                    // Row(
-                    //   children: [
-                    //     Expanded(
-                    //       child: SizedBox(
-                    //         height: 48,
-                    //         child: ElevatedButton(
-                    //           onPressed: () {},
-                    //           style: ElevatedButton.styleFrom(
-                    //             backgroundColor: Color(0xffF5F5F5),
-                    //             shape: RoundedRectangleBorder(
-                    //               borderRadius: BorderRadius.circular(8),
-                    //             ),
-                    //             elevation: 0,
-                    //           ),
-                    //           child: Row(
-                    //             mainAxisSize: MainAxisSize.min,
-                    //             mainAxisAlignment: MainAxisAlignment.center,
-                    //             children: [
-                    //               Image.asset(
-                    //                 'assets/photos/Google.jpg',
-                    //                 width: 16,
-                    //                 height: 16,
-                    //               ),
-                    //               SizedBox(width: 8),
-                    //               Text(
-                    //                 'Google',
-                    //                 style: TextStyle(
-                    //                   color: Color(0xff222222),
-                    //                   fontWeight: FontWeight.w400,
-                    //                   fontSize: 14,
-                    //                 ),
-                    //               ),
-                    //             ],
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     SizedBox(width: 16),
-                    //     Expanded(
-                    //       child: SizedBox(
-                    //         height: 48,
-                    //         child: ElevatedButton(
-                    //           onPressed: () {},
-                    //           style: ElevatedButton.styleFrom(
-                    //             backgroundColor: Color(0xffF5F5F5),
-                    //             shape: RoundedRectangleBorder(
-                    //               borderRadius: BorderRadius.circular(8),
-                    //             ),
-                    //             elevation: 0,
-                    //           ),
-                    //           child: Row(
-                    //             mainAxisSize: MainAxisSize.min,
-                    //             mainAxisAlignment: MainAxisAlignment.center,
-                    //             children: [
-                    //               Image.asset(
-                    //                 'assets/photos/facebook.jpg',
-                    //                 width: 16,
-                    //                 height: 16,
-                    //               ),
-                    //               SizedBox(width: 8),
-                    //               Text(
-                    //                 'Facebook',
-                    //                 style: TextStyle(
-                    //                   color: Color(0xff222222),
-                    //                   fontWeight: FontWeight.w400,
-                    //                   fontSize: 14,
-                    //                 ),
-                    //               ),
-                    //             ],
-                    //           ),
-                    //         ),
-                    //       ),
-                    //     ),
-                    //   ],
-                    // ),
-                    SizedBox(height: 30),
-
-                    // Sign In Link
-                    Center(
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context); // Navigate back to login page
-                        },
-                        child: Text.rich(
-                          TextSpan(
-                            text: "Already have an account? ",
-                            style: TextStyle(
-                              color: Color(0xff888888),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: 'Sign In',
-                                style: TextStyle(
-                                  color: Color(0xff21BDCA),
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
+                      // Link Sign In
+                      Center(
+                        child: GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Text.rich(
+                            TextSpan(
+                              text: "Already have an account? ",
+                              style: TextStyle(
+                                color: Color(0xff888888),
+                                fontSize: 12,
                               ),
-                            ],
+                              children: [
+                                TextSpan(
+                                  text: 'Sign In',
+                                  style: TextStyle(
+                                    color: Color(0xff21BDCA),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Color(0xff888888),
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
       ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(fontSize: 15, color: Colors.grey),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 }

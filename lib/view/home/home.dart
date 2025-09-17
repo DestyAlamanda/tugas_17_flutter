@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:tugas_17_flutter/api/user_api.dart';
+import 'package:tugas_17_flutter/model/user_model.dart';
+import 'package:tugas_17_flutter/utils/shared_preference.dart';
+import 'package:tugas_17_flutter/view/auth/login_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,6 +12,29 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late Future<UserModel> futureProfile;
+
+  @override
+  void initState() {
+    super.initState();
+    futureProfile = _loadProfile();
+  }
+
+  Future<UserModel> _loadProfile() async {
+    final token = await PreferenceHandler.getToken();
+    if (token == null) {
+      // Jika token tidak ada, arahkan ke login
+      Future.microtask(() {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+        );
+      });
+      throw Exception("Token tidak ditemukan, silakan login ulang");
+    }
+    return UserAPI.getProfile();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,39 +47,55 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     radius: 26,
-                    child: SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: const Icon(
-                        Icons.person_rounded,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ),
+                    child: Icon(Icons.person, size: 28, color: Colors.white),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Hai...",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Text(
-                        "Mpro Batch 3",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
+                  Expanded(
+                    child: FutureBuilder<UserModel>(
+                      future: futureProfile,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator(
+                            color: Colors.white,
+                          );
+                        } else if (snapshot.hasError) {
+                          return Text(
+                            "Error: ${snapshot.error}",
+                            style: const TextStyle(color: Colors.red),
+                          );
+                        } else if (snapshot.hasData) {
+                          final user = snapshot.data!.data;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Halo, ${user?.name ?? '-'}",
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const Text(
+                                "Mpro Batch 3",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.normal,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return const Text(
+                          "Tidak ada data",
+                          style: TextStyle(color: Colors.white),
+                        );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -253,7 +296,7 @@ class _HomePageState extends State<HomePage> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: Color(0xFF122C29),
+                                  color: const Color(0xFF122C29),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Icon(
@@ -263,7 +306,6 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Flexible column supaya tidak overflow
                               Expanded(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
@@ -275,11 +317,9 @@ class _HomePageState extends State<HomePage> {
                                         color: Colors.white,
                                         fontSize: 20,
                                       ),
-                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    // SizedBox(height: 4),
                                     Text(
-                                      "Senin, 20 Juni 2024",
+                                      "Senin, 20 Juni 2024 - 08:00",
                                       style: TextStyle(
                                         color: Colors.white70,
                                         fontSize: 14,
@@ -289,18 +329,9 @@ class _HomePageState extends State<HomePage> {
                                   ],
                                 ),
                               ),
-                              const Text(
-                                "08.00",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                              ),
                             ],
                           ),
                         ),
-
-                        const SizedBox(height: 500), // contoh konten panjang
                       ],
                     ),
                   ),
