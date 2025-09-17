@@ -4,9 +4,9 @@ class PreferenceHandler {
   static const String loginKey = "login";
   static const String tokenKey = "token";
 
-  static Future<void> saveLogin() async {
+  static Future<void> saveLogin(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(loginKey, true);
+    await prefs.setBool(loginKey, value);
   }
 
   static Future<void> saveToken(String token) async {

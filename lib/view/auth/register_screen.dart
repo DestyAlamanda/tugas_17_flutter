@@ -79,7 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (mounted) {
-        final message = response.message ?? 'Registrasi berhasil!';
+        final message = response.message;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.green),
         );
@@ -99,184 +99,190 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF0E0E0E), // dark bg
       body: _isDataLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 80,
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Create Account",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 30),
+
+                    const Icon(Icons.inbox, color: Colors.white, size: 48),
+                    const SizedBox(height: 12),
+                    const Text(
+                      "Registration",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      "Create your personal account now to access all",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Name
+                    _buildLabel("NAME"),
+                    const SizedBox(height: 4),
+                    _buildTextField(
+                      controller: _nameController,
+                      hint: "Name",
+                      validator: (v) =>
+                          v == null || v.isEmpty ? "Nama wajib diisi" : null,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Email
+                    _buildLabel("EMAIL"),
+                    const SizedBox(height: 4),
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: "Email",
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return "Email wajib diisi";
+                        }
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(v)) {
+                          return "Format email tidak valid";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Password
+                    _buildLabel("PASSWORD"),
+                    const SizedBox(height: 4),
+                    _buildTextField(
+                      controller: _passwordController,
+                      hint: "Password",
+                      obscure: !_isPasswordVisible,
+                      suffix: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.white54,
+                        ),
+                        onPressed: () => setState(
+                          () => _isPasswordVisible = !_isPasswordVisible,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "Sign up to get started",
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFF888888),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return "Password wajib diisi";
+                        }
+                        if (v.length < 6) {
+                          return "Password minimal 6 karakter";
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Dropdown Training
+                    _buildLabel("PELATIHAN"),
+                    const SizedBox(height: 4),
+                    _buildDropdown<Training>(
+                      hint: "Pilih Pelatihan",
+                      value: _selectedTraining,
+                      items: _trainings
+                          .map(
+                            (t) => DropdownMenuItem(
+                              value: t,
+                              child: Text(
+                                t.title,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setState(() => _selectedTraining = val),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Dropdown Batch
+                    _buildLabel("BATCH"),
+                    const SizedBox(height: 4),
+                    _buildDropdown<Batch>(
+                      hint: "Pilih Batch",
+                      value: _selectedBatch,
+                      items: _batches
+                          .map(
+                            (b) => DropdownMenuItem(
+                              value: b,
+                              child: Text(
+                                b.batchKe,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (val) => setState(() => _selectedBatch = val),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Gender
+                    _buildLabel("JENIS KELAMIN"),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: RadioListTile<String>(
+                            activeColor: const Color(0xFF22C1C3),
+                            title: const Text(
+                              "Laki-laki",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                              ),
+                            ),
+                            value: "L",
+                            groupValue: _selectedGender,
+                            onChanged: (v) =>
+                                setState(() => _selectedGender = v),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 25),
-
-                      // Full Name
-                      _buildLabel("Full Name"),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _nameController,
-                        keyboardType: TextInputType.name,
-                        decoration: _inputDecoration("Masukkan nama lengkap"),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Nama tidak boleh kosong'
-                            : null,
-                      ),
-                      const SizedBox(height: 25),
-
-                      // Email
-                      _buildLabel("Email"),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: _inputDecoration("Masukkan email"),
-                        validator: (value) {
-                          if (value == null || value.isEmpty)
-                            return 'Email tidak boleh kosong';
-                          if (!RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(value)) {
-                            return 'Format email tidak valid';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 25),
-
-                      // Password
-                      _buildLabel("Password"),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _passwordController,
-                        obscureText: !_isPasswordVisible,
-                        decoration: _inputDecoration("Masukkan kata sandi")
-                            .copyWith(
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(
-                                    () => _isPasswordVisible =
-                                        !_isPasswordVisible,
-                                  );
-                                },
-                                icon: Icon(
-                                  _isPasswordVisible
-                                      ? Icons.visibility
-                                      : Icons.visibility_off,
-                                  color: Colors.grey,
-                                ),
+                        Expanded(
+                          child: RadioListTile<String>(
+                            activeColor: const Color(0xFF22C1C3),
+                            title: const Text(
+                              "Perempuan",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
                               ),
                             ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty)
-                            return 'Password tidak boleh kosong';
-                          if (value.length < 6)
-                            return 'Password minimal 6 karakter';
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 25),
-
-                      // Dropdown Pelatihan
-                      _buildLabel("Pelatihan"),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<Training>(
-                        initialValue: _selectedTraining,
-                        decoration: _inputDecoration("Pilih Pelatihan"),
-                        items: _trainings.map((training) {
-                          return DropdownMenuItem<Training>(
-                            value: training,
-                            child: Text(training.title),
-                          );
-                        }).toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedTraining = val),
-                        validator: (val) =>
-                            val == null ? 'Pelatihan harus dipilih' : null,
-                      ),
-                      const SizedBox(height: 25),
-
-                      // Dropdown Batch
-                      _buildLabel("Batch"),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<Batch>(
-                        initialValue: _selectedBatch,
-                        decoration: _inputDecoration("Pilih Batch"),
-                        items: _batches.map((batch) {
-                          return DropdownMenuItem<Batch>(
-                            value: batch,
-                            child: Text(batch.batchKe),
-                          );
-                        }).toList(),
-                        onChanged: (val) =>
-                            setState(() => _selectedBatch = val),
-                        validator: (val) =>
-                            val == null ? 'Batch harus dipilih' : null,
-                      ),
-                      const SizedBox(height: 25),
-
-                      // Dropdown Gender
-                      const SizedBox(height: 8),
-                      Text('Jenis Kelamin', style: TextStyle(fontSize: 14)),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text(
-                                'Laki-laki',
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              value: 'L',
-                              groupValue: _selectedGender,
-                              onChanged: (v) =>
-                                  setState(() => _selectedGender = v),
-                              contentPadding: EdgeInsets.zero,
-                            ),
+                            value: "P",
+                            groupValue: _selectedGender,
+                            onChanged: (v) =>
+                                setState(() => _selectedGender = v),
                           ),
-                          Expanded(
-                            child: RadioListTile<String>(
-                              title: const Text(
-                                'Perempuan',
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              value: 'P',
-                              groupValue: _selectedGender,
-                              onChanged: (v) =>
-                                  setState(() => _selectedGender = v),
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
 
-                      // Register Button
-                      ElevatedButton(
+                    // Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xff21BDCA),
-                          fixedSize: const Size(327, 56),
+                          backgroundColor: const Color(0xFF22C1C3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: _isLoading
@@ -284,43 +290,37 @@ class _RegisterPageState extends State<RegisterPage> {
                                 color: Colors.white,
                               )
                             : const Text(
-                                "Sign Up",
+                                "Next",
                                 style: TextStyle(
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                                  fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
                               ),
                       ),
-                      const SizedBox(height: 30),
+                    ),
+                    const SizedBox(height: 24),
 
-                      // Link Sign In
-                      Center(
-                        child: GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Text.rich(
+                    // Back to login
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Text.rich(
+                        TextSpan(
+                          text: "back to ",
+                          style: TextStyle(color: Colors.white70, fontSize: 14),
+                          children: [
                             TextSpan(
-                              text: "Already have an account? ",
+                              text: "Login",
                               style: TextStyle(
-                                color: Color(0xff888888),
-                                fontSize: 12,
+                                color: Color(0xFF22C1C3),
+                                fontWeight: FontWeight.bold,
                               ),
-                              children: [
-                                TextSpan(
-                                  text: 'Sign In',
-                                  style: TextStyle(
-                                    color: Color(0xff21BDCA),
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -328,22 +328,68 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Color(0xff888888),
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          fontSize: 12,
+        ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: const TextStyle(fontSize: 15, color: Colors.grey),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    String? Function(String?)? validator,
+    bool obscure = false,
+    Widget? suffix,
+  }) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(color: Colors.white),
+      obscureText: obscure,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white54),
+        enabledBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.white24),
+        ),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Color(0xFF22C1C3)),
+        ),
+        suffixIcon: suffix,
+      ),
+      validator: validator,
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required String hint,
+    required List<DropdownMenuItem<T>> items,
+    required T? value,
+    required void Function(T?) onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      dropdownColor: const Color(0xFF1A1A1A),
+      initialValue: value,
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Colors.white54),
+        enabledBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.white24),
+        ),
+        focusedBorder: const UnderlineInputBorder(
+          borderSide: BorderSide(color: Color(0xFF22C1C3)),
+        ),
+      ),
+      items: items,
+      onChanged: onChanged,
+      validator: (v) => v == null ? "Wajib dipilih" : null,
+      style: const TextStyle(color: Colors.white),
     );
   }
 }

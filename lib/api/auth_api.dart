@@ -2,11 +2,13 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tugas_17_flutter/api/endpoint/endpoint.dart';
 import 'package:tugas_17_flutter/model/batch.dart';
 import 'package:tugas_17_flutter/model/login_model.dart';
 import 'package:tugas_17_flutter/model/register_model.dart';
 import 'package:tugas_17_flutter/model/training.dart';
+import 'package:tugas_17_flutter/utils/shared_preference.dart';
 
 class AuthenticationAPI {
   /// REGISTER
@@ -66,7 +68,15 @@ class AuthenticationAPI {
       );
 
       if (response.statusCode == 200) {
-        return LoginUserModel.fromJson(json.decode(response.body));
+        final data = json.decode(response.body);
+        final model = LoginUserModel.fromJson(data);
+
+        if (model.token.isNotEmpty) {
+          await PreferenceHandler.saveToken(model.token);
+          await PreferenceHandler.saveLogin(true);
+        }
+
+        return model;
       } else {
         final error = json.decode(response.body);
         throw Exception(error["message"] ?? "Login gagal");
@@ -116,5 +126,20 @@ class AuthenticationAPI {
     } catch (e) {
       throw e.toString();
     }
+  }
+
+  Future<void> _removeToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+  }
+
+  Future<void> _saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('auth_token');
   }
 }

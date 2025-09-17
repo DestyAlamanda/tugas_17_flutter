@@ -7,9 +7,7 @@ class LoginUserModel {
   factory LoginUserModel.fromJson(Map<String, dynamic> json) {
     return LoginUserModel(
       message: json['message'] ?? '',
-      token: json['token'] ?? '',
+      token: json['data']?['token'] ?? '',
     );
   }
-
-  void operator [](String other) {}
 }
