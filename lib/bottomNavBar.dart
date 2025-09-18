@@ -3,7 +3,7 @@ import 'package:tugas_17_flutter/absen.dart';
 import 'package:tugas_17_flutter/blabla.dart';
 import 'package:tugas_17_flutter/google_map.dart';
 import 'package:tugas_17_flutter/profile_page.dart';
-import 'package:tugas_17_flutter/view/home/home.dart';
+import 'package:tugas_17_flutter/view/home/home.dart' hide GoogleMapsScreen;
 
 class BottomNavigator extends StatefulWidget {
   const BottomNavigator({super.key});

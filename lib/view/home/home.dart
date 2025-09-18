@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart'; // ✅ import tambahan
+import 'package:tugas_17_flutter/api/attendance_api.dart';
+import 'package:tugas_17_flutter/api/user_api.dart';
 import 'package:tugas_17_flutter/google_map.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
@@ -12,7 +15,45 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   UserModel? userData;
-  AttendanceRecord? latestAttendance; // ✅ data check-in terakhir
+  AttendanceRecord? latestAttendance;
+  final AttendanceService _attendanceService = AttendanceService();
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Inisialisasi locale 'id_ID' sebelum load data absensi
+    initializeDateFormatting('id_ID', null).then((_) {
+      _loadUserData();
+      _loadLatestAttendance(); // load data absensi setelah intl siap
+    });
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final savedUser =
+          await UserAPI.getProfile(); // contoh: ambil dari local storage / API
+      setState(() {
+        userData = savedUser;
+      });
+    } catch (e) {
+      print('Gagal load data user: $e');
+    }
+  }
+
+  // Ambil data check-in hari ini
+  Future<void> _loadLatestAttendance() async {
+    try {
+      final todayData = await _attendanceService.getTodayAttendance();
+      if (todayData['data'] != null) {
+        setState(() {
+          latestAttendance = AttendanceRecord.fromJson(todayData['data']);
+        });
+      }
+    } catch (e) {
+      print('Gagal load absensi hari ini: $e');
+    }
+  }
 
   Future<void> _openGoogleMaps() async {
     final result = await Navigator.push(
@@ -21,9 +62,8 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (result != null) {
-      setState(() {
-        latestAttendance = AttendanceRecord.fromJson(result);
-      });
+      // setelah check-in berhasil, load riwayat terbaru dari server
+      await _loadLatestAttendance();
     }
   }
 
@@ -31,7 +71,6 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-
       body: Column(
         children: [
           // HEADER
@@ -64,9 +103,9 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.white,
                         ),
                       ),
-                      const Text(
-                        "lala",
-                        style: TextStyle(
+                      Text(
+                        "Batch: ${userData?.data?.batchKe ?? '-'} | Training: ${userData?.data?.trainingTitle ?? '-'}",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.normal,
                           color: Colors.white70,
@@ -310,11 +349,34 @@ class _HomePageState extends State<HomePage> {
                                     ],
                                   ),
                                 ),
-                                Text(
-                                  latestAttendance!.checkInTime,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: latestAttendance!.isLate
+                                        ? const Color(
+                                            0xFF332F1A,
+                                          ) // late → background gelap
+                                        : const Color(
+                                            0xFF122C29,
+                                          ), // on time → background biru gelap
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Text(
+                                    latestAttendance!.isLate
+                                        ? "late"
+                                        : "on time",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: latestAttendance!.isLate
+                                          ? Colors
+                                                .yellow // late → teks kuning
+                                          : const Color(
+                                              0xFF4effca,
+                                            ), // on time → teks hijau
+                                    ),
                                   ),
                                 ),
                               ],

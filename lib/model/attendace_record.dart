@@ -35,13 +35,11 @@ class AttendanceRecord {
     if (json['attendance_date'] != null) {
       try {
         attendanceDate = DateTime.parse(json['attendance_date']);
-      } catch (e) {
-        // Biarkan null jika format salah
-      }
+      } catch (e) {}
     }
 
     return AttendanceRecord(
-      id: json['id'] ?? 0, // Mengambil ID dari JSON
+      id: json['id'] ?? 0,
       day: attendanceDate != null
           ? DateFormat('EEEE', 'id_ID').format(attendanceDate)
           : 'Unknown',
@@ -53,5 +51,17 @@ class AttendanceRecord {
       status: json['status'] ?? 'masuk',
       alasanIzin: json['alasan_izin'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'day': day,
+      'date': date,
+      'check_in_time': checkInTime,
+      'check_out_time': checkOutTime,
+      'status': status,
+      'alasan_izin': alasanIzin,
+    };
   }
 }

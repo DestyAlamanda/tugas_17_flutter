@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
+import 'package:tugas_17_flutter/model/attendace_record.dart';
 
 class GoogleMapsScreen extends StatefulWidget {
   const GoogleMapsScreen({super.key});
@@ -34,11 +36,15 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
       duration: const Duration(seconds: 2),
       vsync: this,
     );
+
     _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
     _pulseController.repeat(reverse: true);
+
+    // Inisialisasi locale
+    initializeDateFormatting('id_ID', null);
 
     _getCurrentLocation();
   }
@@ -95,8 +101,6 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
               mapController = controller;
             },
           ),
-
-          // Tombol dummy untuk get lokasi
           Positioned(
             bottom: 300,
             left: 0,
@@ -108,8 +112,6 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
               ),
             ),
           ),
-
-          // Bottom sheet
           DraggableScrollableSheet(
             initialChildSize: 0.40,
             minChildSize: 0.2,
@@ -135,8 +137,6 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                         ),
                       ),
                     ),
-
-                    // Lokasi sekarang
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -191,10 +191,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 30),
-
-                    // Tombol CHECK IN
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 200),
@@ -218,32 +215,89 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                                       'yyyy-MM-dd',
                                     ).format(now);
                                     final time = DateFormat(
-                                      'HH:mm:ss',
+                                      'HH:mm',
                                     ).format(now);
 
-                                    final result = await AttendanceService()
-                                        .checkIn(
-                                          latitude: _currentPosition.latitude,
-                                          longitude: _currentPosition.longitude,
-                                          address: _currentAddress,
-                                          date: date,
-                                          time: time,
-                                        );
+                                    AttendanceRecord record;
 
-                                    _showCheckAnimation();
+                                    try {
+                                      final result = await AttendanceService()
+                                          .checkIn(
+                                            latitude: _currentPosition.latitude,
+                                            longitude:
+                                                _currentPosition.longitude,
+                                            address: _currentAddress,
+                                            date: date,
+                                            time: time,
+                                          );
 
-                                    Future.delayed(
-                                      const Duration(seconds: 2),
-                                      () {
-                                        Navigator.pop(context, result['data']);
-                                      },
-                                    );
+                                      _showCheckAnimation(); // animasi Lottie
+
+                                      // tampilkan snackbar
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            "Absen berhasil!",
+                                          ),
+                                          backgroundColor: Colors.green[600],
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+
+                                      record = AttendanceRecord(
+                                        id: result['data']['id'] ?? 0,
+                                        day: DateFormat(
+                                          'EEEE',
+                                          'id_ID',
+                                        ).format(now),
+                                        date: DateFormat(
+                                          'dd MMM yy',
+                                          'id_ID',
+                                        ).format(now),
+                                        checkInTime: DateFormat(
+                                          'HH:mm',
+                                        ).format(now),
+                                        checkOutTime: '-',
+                                        status: 'masuk',
+                                      );
+                                    } catch (e) {
+                                      // Jika sudah absen hari ini, ambil data dari server
+                                      final today = await AttendanceService()
+                                          .getTodayAttendance();
+                                      record = AttendanceRecord.fromJson(
+                                        today['data'],
+                                      );
+
+                                      // tampilkan snackbar sudah absen
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            "Anda sudah absen hari ini",
+                                          ),
+                                          backgroundColor: Colors.orange[700],
+                                          duration: const Duration(seconds: 2),
+                                        ),
+                                      );
+                                    }
+
+                                    Navigator.pop(context, record.toJson());
                                   } catch (e) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text(e.toString())),
+                                      SnackBar(
+                                        content: Text(
+                                          "Gagal absen: ${e.toString()}",
+                                        ),
+                                        backgroundColor: Colors.red[600],
+                                        duration: const Duration(seconds: 2),
+                                      ),
                                     );
                                   }
                                 },
+
                                 child: Container(
                                   width: 160,
                                   height: 160,
