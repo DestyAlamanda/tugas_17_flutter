@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tugas_17_flutter/google_map.dart';
+import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 
 class HomePage extends StatefulWidget {
@@ -10,10 +12,26 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   UserModel? userData;
+  AttendanceRecord? latestAttendance; // ✅ data check-in terakhir
+
+  Future<void> _openGoogleMaps() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const GoogleMapsScreen()),
+    );
+
+    if (result != null) {
+      setState(() {
+        latestAttendance = AttendanceRecord.fromJson(result);
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
+
       body: Column(
         children: [
           // HEADER
@@ -70,8 +88,8 @@ class _HomePageState extends State<HomePage> {
                 decoration: const BoxDecoration(
                   color: Color(0xFF111216),
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(28),
-                    topRight: Radius.circular(28),
+                    topLeft: Radius.circular(30),
+                    topRight: Radius.circular(30),
                   ),
                 ),
                 child: Padding(
@@ -83,7 +101,6 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // CARD JAM & TANGGAL
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(10),
@@ -241,66 +258,68 @@ class _HomePageState extends State<HomePage> {
                         const SizedBox(height: 16),
 
                         // CARD RIWAYAT
-                        Container(
-                          height: 90,
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Color(0xFF122C29),
-                                  borderRadius: BorderRadius.circular(12),
+                        if (latestAttendance != null)
+                          Container(
+                            height: 90,
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[900],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF122C29),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(
+                                    Icons.event_rounded,
+                                    color: Color(0xFF4effca),
+                                    size: 24,
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.event_rounded,
-                                  color: Color(0xFF4effca),
-                                  size: 24,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Flexible column supaya tidak overflow
-                              Expanded(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: const [
-                                    Text(
-                                      "Check In",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 20,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        latestAttendance!.status == 'masuk'
+                                            ? "Check In"
+                                            : "Check Out",
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 20,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    // SizedBox(height: 4),
-                                    Text(
-                                      "Senin, 20 Juni 2024",
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 14,
+                                      Text(
+                                        latestAttendance!.date,
+                                        style: const TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: 14,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              const Text(
-                                "08.00",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
+                                Text(
+                                  latestAttendance!.checkInTime,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
 
                         const SizedBox(height: 500), // contoh konten panjang
                       ],

@@ -18,7 +18,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _checkLogin() async {
-    final isLogin = await PreferenceHandler.getLogin();
+    final isLogin = await PreferenceHandler.isLoggedIn();
+
     final token = await PreferenceHandler.getToken();
 
     await Future.delayed(const Duration(seconds: 2));

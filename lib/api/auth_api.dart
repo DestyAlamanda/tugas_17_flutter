@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tugas_17_flutter/api/endpoint/endpoint.dart';
 import 'package:tugas_17_flutter/model/batch.dart';
 import 'package:tugas_17_flutter/model/login_model.dart';
@@ -71,6 +70,7 @@ class AuthenticationAPI {
         final data = json.decode(response.body);
         final model = LoginUserModel.fromJson(data);
 
+        // Simpan token secara konsisten
         if (model.token.isNotEmpty) {
           await PreferenceHandler.saveToken(model.token);
           await PreferenceHandler.saveLogin(true);
@@ -84,6 +84,17 @@ class AuthenticationAPI {
     } catch (e) {
       throw Exception("Login gagal: $e");
     }
+  }
+
+  /// Ambil token
+  Future<String?> getToken() async {
+    return await PreferenceHandler.getToken();
+  }
+
+  /// Logout
+  Future<void> logout() async {
+    await PreferenceHandler.removeToken();
+    await PreferenceHandler.saveLogin(false);
   }
 
   /// GET TRAININGS
@@ -126,20 +137,5 @@ class AuthenticationAPI {
     } catch (e) {
       throw e.toString();
     }
-  }
-
-  Future<void> _removeToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('auth_token');
-  }
-
-  Future<void> _saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('auth_token', token);
-  }
-
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('auth_token');
   }
 }

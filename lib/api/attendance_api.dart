@@ -2,20 +2,25 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
-import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/api/endpoint/endpoint.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/attendance_stats.dart';
+import 'package:tugas_17_flutter/utils/shared_preference.dart';
 
 class AttendanceService {
-  final AuthenticationAPI _authService = AuthenticationAPI();
-
+  /// Ambil token dari shared preferences
   Future<String> _getAuthToken() async {
-    final token = await _authService.getToken();
-    if (token == null) throw 'Sesi Anda telah berakhir. Silakan login kembali.';
+    final token = await PreferenceHandler.getToken();
+    print('Token check-in: $token'); // debug
+    if (token == null || token.isEmpty) {
+      await PreferenceHandler.removeToken();
+      await PreferenceHandler.saveLogin(false);
+      throw 'Sesi Anda telah berakhir. Silakan login kembali.';
+    }
     return token;
   }
 
+  /// Check-in
   Future<Map<String, dynamic>> checkIn({
     required double latitude,
     required double longitude,
@@ -25,6 +30,7 @@ class AttendanceService {
   }) async {
     final token = await _getAuthToken();
     final url = Uri.parse(Endpoint.checkIn);
+
     try {
       final response = await http.post(
         url,
@@ -41,6 +47,7 @@ class AttendanceService {
           'status': 'masuk',
         },
       );
+
       final responseData = json.decode(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
         return responseData;
@@ -55,6 +62,7 @@ class AttendanceService {
     }
   }
 
+  /// Check-out
   Future<Map<String, dynamic>> checkOut({
     required double latitude,
     required double longitude,
@@ -64,6 +72,7 @@ class AttendanceService {
   }) async {
     final token = await _getAuthToken();
     final url = Uri.parse(Endpoint.checkOut);
+
     try {
       final response = await http.post(
         url,
@@ -79,6 +88,7 @@ class AttendanceService {
           'check_out': time,
         },
       );
+
       final responseData = json.decode(response.body);
       if (response.statusCode == 200) {
         return responseData;
@@ -93,12 +103,14 @@ class AttendanceService {
     }
   }
 
+  /// Submit izin
   Future<Map<String, dynamic>> submitIzin({
     required String alasan,
     required String date,
   }) async {
     final token = await _getAuthToken();
     final url = Uri.parse(Endpoint.submitIzin);
+
     try {
       final response = await http.post(
         url,
@@ -124,9 +136,11 @@ class AttendanceService {
     }
   }
 
+  /// Get today's attendance
   Future<Map<String, dynamic>> getTodayAttendance() async {
     final token = await _getAuthToken();
     final url = Uri.parse(Endpoint.todayAttendance);
+
     try {
       final response = await http.get(
         url,
@@ -135,6 +149,7 @@ class AttendanceService {
           'Authorization': 'Bearer $token',
         },
       );
+
       return json.decode(response.body);
     } on SocketException {
       throw 'Tidak dapat terhubung ke server.';
@@ -144,9 +159,11 @@ class AttendanceService {
     }
   }
 
+  /// Get attendance statistics
   Future<AttendanceStats> getAttendanceStats() async {
     final token = await _getAuthToken();
     final url = Uri.parse(Endpoint.attendanceStats);
+
     try {
       final response = await http.get(
         url,
@@ -155,6 +172,7 @@ class AttendanceService {
           'Authorization': 'Bearer $token',
         },
       );
+
       final responseData = json.decode(response.body);
       if (response.statusCode == 200) {
         return AttendanceStats.fromJson(responseData['data']);
@@ -169,6 +187,7 @@ class AttendanceService {
     }
   }
 
+  /// Get attendance history
   Future<List<AttendanceRecord>> getAttendanceHistory({
     String? startDate,
     String? endDate,
@@ -188,6 +207,7 @@ class AttendanceService {
           'Authorization': 'Bearer $token',
         },
       );
+
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body)['data'];
         return data.map((json) => AttendanceRecord.fromJson(json)).toList();
