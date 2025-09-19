@@ -323,11 +323,11 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                       ),
                     ),
                     const SizedBox(height: 30),
-                    // Punch In / Punch Out (satu tempat, dinamis)
+                    // Punch In / Punch Out
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                        vertical: 10,
+                        vertical: 20,
                         horizontal: 16,
                       ),
                       decoration: BoxDecoration(

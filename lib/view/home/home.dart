@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:intl/date_symbol_data_local.dart'; // ✅ import tambahan
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/api/user_api.dart';
 import 'package:tugas_17_flutter/google_map.dart';
@@ -17,11 +20,18 @@ class _HomePageState extends State<HomePage> {
   UserModel? userData;
   AttendanceRecord? latestAttendance;
   final AttendanceService _attendanceService = AttendanceService();
+  String _currentTime = DateFormat.Hms().format(DateTime.now());
 
   @override
   void initState() {
     super.initState();
-
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateFormat.Hms().format(DateTime.now());
+        });
+      }
+    });
     initializeDateFormatting('id_ID', null).then((_) {
       _loadUserData();
       _loadLatestAttendance();
@@ -31,15 +41,19 @@ class _HomePageState extends State<HomePage> {
   Future<void> _loadUserData() async {
     try {
       final savedUser = await UserAPI.getProfile();
+      print(
+        "✅ User data dari API: ${savedUser.data?.name}, "
+        "Batch: ${savedUser.data?.batchKe}, "
+        "Training: ${savedUser.data?.trainingTitle}",
+      );
       setState(() {
         userData = savedUser;
       });
     } catch (e) {
-      print('Gagal load data user: $e');
+      print('❌ Gagal load data user: $e');
     }
   }
 
-  // Ambil data check-in hari ini
   Future<void> _loadLatestAttendance() async {
     try {
       final todayData = await _attendanceService.getTodayAttendance();
@@ -49,7 +63,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      print('Gagal load absensi hari ini: $e');
+      print('❌ Gagal load absensi hari ini: $e');
     }
   }
 
@@ -60,7 +74,6 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (result != null) {
-      // setelah check-in berhasil, load riwayat terbaru dari server
       await _loadLatestAttendance();
     }
   }
@@ -94,7 +107,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Halo, ${userData?.data?.name ?? ''}",
+                        "Halo, ${userData?.data?.name ?? '...'}",
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -102,7 +115,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Text(
-                        "Batch: ${userData?.data?.batchKe ?? '-'} | Training: ${userData?.data?.trainingTitle ?? '-'}",
+                        "Batch: ${userData?.data?.batchKe ?? '...'} | Training: ${userData?.data?.trainingTitle ?? '...'}",
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.normal,
@@ -147,17 +160,17 @@ class _HomePageState extends State<HomePage> {
                           ),
                           child: Column(
                             children: [
-                              const Text(
-                                "Senin, 20 Juni 2024",
-                                style: TextStyle(
+                              Text(
+                                latestAttendance?.date ?? "-",
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Text(
-                                "00 : 00 : 00",
-                                style: TextStyle(
+                              Text(
+                                _currentTime,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -179,16 +192,16 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Column(
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "08:00",
-                                          style: TextStyle(
+                                          latestAttendance?.checkInTime ?? "-",
+                                          style: const TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 30,
                                           ),
                                         ),
-                                        Text(
+                                        const Text(
                                           "Check In",
                                           style: TextStyle(
                                             color: Colors.white,
@@ -213,16 +226,16 @@ class _HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Column(
-                                      children: const [
+                                      children: [
                                         Text(
-                                          "15:00",
-                                          style: TextStyle(
+                                          latestAttendance?.checkOutTime ?? "-",
+                                          style: const TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
                                             fontSize: 30,
                                           ),
                                         ),
-                                        Text(
+                                        const Text(
                                           "Check Out",
                                           style: TextStyle(
                                             color: Colors.white,
@@ -354,12 +367,8 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: latestAttendance!.isLate
-                                        ? const Color(
-                                            0xFF332F1A,
-                                          ) // late → background gelap
-                                        : const Color(
-                                            0xFF122C29,
-                                          ), // on time → background biru gelap
+                                        ? const Color(0xFF332F1A)
+                                        : const Color(0xFF122C29),
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   child: Text(
@@ -369,11 +378,8 @@ class _HomePageState extends State<HomePage> {
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: latestAttendance!.isLate
-                                          ? Colors
-                                                .yellow // late → teks kuning
-                                          : const Color(
-                                              0xFF4effca,
-                                            ), // on time → teks hijau
+                                          ? Colors.yellow
+                                          : const Color(0xFF4effca),
                                     ),
                                   ),
                                 ),
@@ -381,7 +387,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                           ),
 
-                        const SizedBox(height: 500), // contoh konten panjang
+                        const SizedBox(height: 500),
                       ],
                     ),
                   ),

@@ -1,7 +1,3 @@
-// To parse this JSON data, do
-//
-//     final userModel = userModelFromJson(jsonString);
-
 import 'dart:convert';
 
 import 'package:tugas_17_flutter/model/batch.dart';
@@ -15,37 +11,39 @@ class UserModel {
   String? message;
   Data? data;
 
-  UserModel({required this.message, required this.data});
+  UserModel({this.message, this.data});
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      UserModel(message: json["message"], data: Data.fromJson(json["data"]));
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+    message: json["message"],
+    data: json["data"] == null ? null : Data.fromJson(json["data"]),
+  );
 
   Map<String, dynamic> toJson() => {"message": message, "data": data?.toJson()};
 }
 
 class Data {
-  int id;
-  String name;
-  String email;
-  String batchKe;
-  String trainingTitle;
-  Batch batch;
-  Training training;
-  String jenisKelamin;
-  String profilePhoto;
-  String profilePhotoUrl;
+  int? id;
+  String? name;
+  String? email;
+  String? batchKe;
+  String? trainingTitle;
+  Batch? batch;
+  Training? training;
+  String? jenisKelamin;
+  dynamic profilePhoto;
+  dynamic profilePhotoUrl;
 
   Data({
-    required this.id,
-    required this.name,
-    required this.email,
-    required this.batchKe,
-    required this.trainingTitle,
-    required this.batch,
-    required this.training,
-    required this.jenisKelamin,
-    required this.profilePhoto,
-    required this.profilePhotoUrl,
+    this.id,
+    this.name,
+    this.email,
+    this.batchKe,
+    this.trainingTitle,
+    this.batch,
+    this.training,
+    this.jenisKelamin,
+    this.profilePhoto,
+    this.profilePhotoUrl,
   });
 
   factory Data.fromJson(Map<String, dynamic> json) => Data(
@@ -54,8 +52,10 @@ class Data {
     email: json["email"],
     batchKe: json["batch_ke"],
     trainingTitle: json["training_title"],
-    batch: Batch.fromJson(json["batch"]),
-    training: Training.fromJson(json["training"]),
+    batch: json["batch"] == null ? null : Batch.fromJson(json["batch"]),
+    training: json["training"] == null
+        ? null
+        : Training.fromJson(json["training"]),
     jenisKelamin: json["jenis_kelamin"],
     profilePhoto: json["profile_photo"],
     profilePhotoUrl: json["profile_photo_url"],
@@ -67,8 +67,8 @@ class Data {
     "email": email,
     "batch_ke": batchKe,
     "training_title": trainingTitle,
-    "batch": batch.toJson(),
-    "training": training.toJson(),
+    "batch": batch?.toJson(),
+    "training": training?.toJson(),
     "jenis_kelamin": jenisKelamin,
     "profile_photo": profilePhoto,
     "profile_photo_url": profilePhotoUrl,
