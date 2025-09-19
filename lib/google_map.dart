@@ -6,7 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
-import 'package:tugas_17_flutter/model/attendace_record.dart';
+import 'package:tugas_17_flutter/bottomNavBar.dart';
 
 class GoogleMapsScreen extends StatefulWidget {
   const GoogleMapsScreen({super.key});
@@ -18,35 +18,30 @@ class GoogleMapsScreen extends StatefulWidget {
 class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     with SingleTickerProviderStateMixin {
   gmaps.GoogleMapController? mapController;
-  gmaps.LatLng _currentPosition = const gmaps.LatLng(
-    -6.200000,
-    106.816666,
-  ); // default Jakarta
+  gmaps.LatLng _currentPosition = const gmaps.LatLng(-6.200000, 106.816666);
   String _currentAddress = "Alamat tidak ditemukan";
   gmaps.Marker? _marker;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation = const AlwaysStoppedAnimation(3.0);
 
+  bool _hasCheckedIn = false; // state untuk checkin/checkout
+
   @override
   void initState() {
     super.initState();
-
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-
     _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-
     _pulseController.repeat(reverse: true);
 
-    // Inisialisasi locale
     initializeDateFormatting('id_ID', null);
-
     _getCurrentLocation();
+    _loadTodayAttendance();
   }
 
   @override
@@ -55,7 +50,29 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     super.dispose();
   }
 
-  void _showCheckAnimation() {
+  Future<void> _loadTodayAttendance() async {
+    try {
+      final data = await AttendanceService().getTodayAttendance();
+      debugPrint("📥 Response todayAttendance: $data");
+
+      if (!mounted) return;
+      setState(() {
+        final todayData = data['data'];
+        if (todayData != null) {
+          _hasCheckedIn =
+              todayData['check_in_time'] != null &&
+              todayData['check_out_time'] == null;
+        } else {
+          _hasCheckedIn = false;
+        }
+        debugPrint("🔄 Status absen hari ini: $_hasCheckedIn");
+      });
+    } catch (e) {
+      debugPrint("Gagal load status absensi: $e");
+    }
+  }
+
+  void _showCheckAnimationAndGoHome() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -66,12 +83,136 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
             repeat: false,
             onLoaded: (composition) {
               Future.delayed(composition.duration, () {
-                Navigator.of(context).pop();
+                if (!mounted) return;
+                Navigator.of(context).pop(); // tutup dialog animasi
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BottomNavigator()),
+                );
               });
             },
           ),
         );
       },
+    );
+  }
+
+  // Handler Check In
+  Future<void> _handleCheckIn() async {
+    try {
+      await _getCurrentLocation();
+      final now = DateTime.now();
+      final date = DateFormat('yyyy-MM-dd').format(now);
+      final time = DateFormat('HH:mm').format(now);
+
+      await AttendanceService().checkIn(
+        latitude: _currentPosition.latitude,
+        longitude: _currentPosition.longitude,
+        address: _currentAddress,
+        date: date,
+        time: time,
+      );
+
+      if (!mounted) return;
+      setState(() => _hasCheckedIn = true);
+      debugPrint("✅ Berhasil check-in → ubah jadi $_hasCheckedIn");
+
+      _showCheckAnimationAndGoHome();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Check-in berhasil!"),
+          backgroundColor: Colors.green[600],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal check-in: $e"),
+          backgroundColor: Colors.red[600],
+        ),
+      );
+    }
+  }
+
+  //  Handler Check Out
+  Future<void> _handleCheckOut() async {
+    try {
+      await _getCurrentLocation();
+      final now = DateTime.now();
+      final date = DateFormat('yyyy-MM-dd').format(now);
+      final time = DateFormat('HH:mm').format(now);
+
+      await AttendanceService().checkOut(
+        latitude: _currentPosition.latitude,
+        longitude: _currentPosition.longitude,
+        address: _currentAddress,
+        date: date,
+        time: time,
+      );
+
+      if (!mounted) return;
+      setState(() => _hasCheckedIn = false);
+
+      _showCheckAnimationAndGoHome();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Check-out berhasil!"),
+          backgroundColor: Colors.red[600],
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal check-out: $e"),
+          backgroundColor: Colors.red[600],
+        ),
+      );
+    }
+  }
+
+  Widget _buildCircleButton(String label) {
+    return Container(
+      width: 160,
+      height: 160,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF2fb398), Color(0xFF4effca), Color(0xFF9effe2)],
+        ),
+        boxShadow: [
+          const BoxShadow(color: Color(0xFF2fb398), blurRadius: 30),
+          BoxShadow(
+            color: const Color(0xFF6C5CE7).withOpacity(0.3),
+            blurRadius: 50,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.touch_app_rounded, color: Colors.white, size: 48),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 2,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -101,21 +242,10 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
               mapController = controller;
             },
           ),
-          Positioned(
-            bottom: 300,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: ElevatedButton(
-                onPressed: _getCurrentLocation,
-                child: const Text("Get Current Location"),
-              ),
-            ),
-          ),
           DraggableScrollableSheet(
-            initialChildSize: 0.40,
-            minChildSize: 0.2,
-            maxChildSize: 0.6,
+            initialChildSize: 0.5,
+            minChildSize: 0.3,
+            maxChildSize: 0.9,
             builder: (context, scrollController) {
               return Container(
                 decoration: const BoxDecoration(
@@ -137,6 +267,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                         ),
                       ),
                     ),
+                    // Lokasi saat ini
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -192,167 +323,54 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                       ),
                     ),
                     const SizedBox(height: 30),
+                    // Punch In / Punch Out (satu tempat, dinamis)
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 200),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 10,
+                        horizontal: 16,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.grey[900],
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      child: Center(
-                        child: AnimatedBuilder(
-                          animation: _pulseAnimation,
-                          builder: (context, child) {
-                            return Transform.scale(
-                              scale: _pulseAnimation.value,
-                              child: GestureDetector(
-                                onLongPress: () async {
-                                  try {
-                                    await _getCurrentLocation();
-
-                                    final now = DateTime.now();
-                                    final date = DateFormat(
-                                      'yyyy-MM-dd',
-                                    ).format(now);
-                                    final time = DateFormat(
-                                      'HH:mm',
-                                    ).format(now);
-
-                                    AttendanceRecord record;
-
-                                    try {
-                                      final result = await AttendanceService()
-                                          .checkIn(
-                                            latitude: _currentPosition.latitude,
-                                            longitude:
-                                                _currentPosition.longitude,
-                                            address: _currentAddress,
-                                            date: date,
-                                            time: time,
-                                          );
-
-                                      _showCheckAnimation(); // animasi Lottie
-
-                                      // tampilkan snackbar
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            "Absen berhasil!",
-                                          ),
-                                          backgroundColor: Colors.green[600],
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-
-                                      record = AttendanceRecord(
-                                        id: result['data']['id'] ?? 0,
-                                        day: DateFormat(
-                                          'EEEE',
-                                          'id_ID',
-                                        ).format(now),
-                                        date: DateFormat(
-                                          'dd MMM yy',
-                                          'id_ID',
-                                        ).format(now),
-                                        checkInTime: DateFormat(
-                                          'HH:mm',
-                                        ).format(now),
-                                        checkOutTime: '-',
-                                        status: 'masuk',
-                                      );
-                                    } catch (e) {
-                                      // Jika sudah absen hari ini, ambil data dari server
-                                      final today = await AttendanceService()
-                                          .getTodayAttendance();
-                                      record = AttendanceRecord.fromJson(
-                                        today['data'],
-                                      );
-
-                                      // tampilkan snackbar sudah absen
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: const Text(
-                                            "Anda sudah absen hari ini",
-                                          ),
-                                          backgroundColor: Colors.orange[700],
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                    }
-
-                                    Navigator.pop(context, record.toJson());
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          "Gagal absen: ${e.toString()}",
-                                        ),
-                                        backgroundColor: Colors.red[600],
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  }
-                                },
-
-                                child: Container(
-                                  width: 160,
-                                  height: 160,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: const LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFF2fb398),
-                                        Color(0xFF4effca),
-                                        Color(0xFF9effe2),
-                                      ],
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Color(0xFF2fb398),
-                                        blurRadius: 30,
-                                      ),
-                                      BoxShadow(
-                                        color: Color(
-                                          0xFF6C5CE7,
-                                        ).withOpacity(0.3),
-                                        blurRadius: 50,
-                                      ),
-                                    ],
-                                  ),
-                                  child: const Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.touch_app_rounded,
-                                          color: Colors.white,
-                                          size: 48,
-                                        ),
-                                        SizedBox(height: 12),
-                                        Text(
-                                          'CHECK IN',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w800,
-                                            letterSpacing: 2,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
+                      child: Column(
+                        children: [
+                          Align(
+                            alignment: Alignment.topLeft,
+                            child: Text(
+                              _hasCheckedIn ? "Punch Out" : "Punch In",
+                              style: const TextStyle(
+                                fontSize: 19,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: AnimatedBuilder(
+                              animation: _pulseAnimation,
+                              builder: (context, child) {
+                                return Transform.scale(
+                                  scale: _pulseAnimation.value,
+                                  child: GestureDetector(
+                                    onLongPress: () async {
+                                      if (_hasCheckedIn) {
+                                        await _handleCheckOut();
+                                      } else {
+                                        await _handleCheckIn();
+                                      }
+                                    },
+                                    child: _buildCircleButton(
+                                      _hasCheckedIn ? "CHECK OUT" : "CHECK IN",
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -393,6 +411,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     );
     Placemark place = placemarks[0];
 
+    if (!mounted) return;
     setState(() {
       _marker = gmaps.Marker(
         markerId: const gmaps.MarkerId("lokasi_saya"),

@@ -22,17 +22,15 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
-    // Inisialisasi locale 'id_ID' sebelum load data absensi
     initializeDateFormatting('id_ID', null).then((_) {
       _loadUserData();
-      _loadLatestAttendance(); // load data absensi setelah intl siap
+      _loadLatestAttendance();
     });
   }
 
   Future<void> _loadUserData() async {
     try {
-      final savedUser =
-          await UserAPI.getProfile(); // contoh: ambil dari local storage / API
+      final savedUser = await UserAPI.getProfile();
       setState(() {
         userData = savedUser;
       });
