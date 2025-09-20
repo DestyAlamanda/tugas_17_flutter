@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:tugas_17_flutter/api/auth_api.dart';
+import 'package:tugas_17_flutter/model/user_model.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -8,6 +10,34 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  User? userData;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Inisialisasi date formatting & load data
+    _loadUserData();
+  }
+
+  final AuthService _authService = AuthService();
+  // Load user profile
+  Future<void> _loadUserData() async {
+    try {
+      final savedUser = await _authService.getUserProfile();
+      setState(() {
+        userData = savedUser;
+      });
+
+      print("✅ User data: ${savedUser.name}");
+      print(
+        "Batch: ${savedUser.batchKe} | Training: ${savedUser.trainingTitle}",
+      );
+    } catch (e) {
+      print('❌ Gagal load data user: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -31,19 +61,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   SizedBox(height: 14),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
+                    children: [
                       Text(
-                        "Halo, User",
-                        style: TextStyle(
+                        "Halo, ${userData?.name ?? '...'}",
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                       ),
-                      SizedBox(height: 5),
+                      const SizedBox(height: 5),
                       Text(
-                        "Batch: 2",
-                        style: TextStyle(
+                        "Batch: ${userData?.batchKe ?? '...'} ",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.normal,
                           color: Colors.white70,
@@ -51,8 +81,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
 
                       Text(
-                        "Training: hotel",
-                        style: TextStyle(
+                        "Training: ${userData?.trainingTitle ?? '...'}",
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.normal,
                           color: Colors.white70,

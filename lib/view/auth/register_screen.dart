@@ -26,7 +26,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool _isLoading = false;
   bool _isDataLoading = true;
 
-  final AuthenticationAPI _authService = AuthenticationAPI();
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
@@ -69,21 +69,22 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await AuthenticationAPI.registerUser(
+      final response = await _authService.registerUser(
         name: _nameController.text,
         email: _emailController.text,
         password: _passwordController.text,
         jenisKelamin: _selectedGender!,
-        batchId: _selectedBatch!.id,
-        trainingId: _selectedTraining!.id,
+        batchId: _selectedBatch!.id.toString(),
+        trainingId: _selectedTraining!.id.toString(),
       );
 
       if (mounted) {
-        final message = response.message;
+        final message = response['message'] ?? 'Registrasi berhasil';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.green),
         );
-        Navigator.of(context).pop();
+
+        Navigator.of(context).pop(); // kembali ke login
       }
     } catch (e) {
       if (mounted) {

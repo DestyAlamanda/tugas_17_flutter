@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
-import 'package:tugas_17_flutter/api/user_api.dart';
+import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/google_map.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
@@ -17,7 +17,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  UserModel? userData;
+  User? userData;
   AttendanceRecord? latestAttendance;
   final AttendanceService _attendanceService = AttendanceService();
   String _currentTime = DateFormat.Hms().format(DateTime.now());
@@ -25,6 +25,8 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+
+    // Update jam tiap detik
     Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -32,28 +34,33 @@ class _HomePageState extends State<HomePage> {
         });
       }
     });
+
+    // Inisialisasi date formatting & load data
     initializeDateFormatting('id_ID', null).then((_) {
       _loadUserData();
       _loadLatestAttendance();
     });
   }
 
+  final AuthService _authService = AuthService();
+  // Load user profile
   Future<void> _loadUserData() async {
     try {
-      final savedUser = await UserAPI.getProfile();
-      print(
-        "✅ User data dari API: ${savedUser.data?.name}, "
-        "Batch: ${savedUser.data?.batchKe}, "
-        "Training: ${savedUser.data?.trainingTitle}",
-      );
+      final savedUser = await _authService.getUserProfile();
       setState(() {
         userData = savedUser;
       });
+
+      print("✅ User data: ${savedUser.name}");
+      print(
+        "Batch: ${savedUser.batchKe} | Training: ${savedUser.trainingTitle}",
+      );
     } catch (e) {
       print('❌ Gagal load data user: $e');
     }
   }
 
+  // Load absensi hari ini
   Future<void> _loadLatestAttendance() async {
     try {
       final todayData = await _attendanceService.getTodayAttendance();
@@ -67,6 +74,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  // Buka Google Maps
   Future<void> _openGoogleMaps() async {
     final result = await Navigator.push(
       context,
@@ -107,7 +115,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Halo, ${userData?.data?.name ?? '...'}",
+                        "Halo, ${userData?.name ?? '...'}",
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -115,7 +123,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Text(
-                        "Batch: ${userData?.data?.batchKe ?? '...'} | Training: ${userData?.data?.trainingTitle ?? '...'}",
+                        "Batch: ${userData?.batchKe ?? '...'} | Training: ${userData?.trainingTitle ?? '...'}",
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.normal,

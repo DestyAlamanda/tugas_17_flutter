@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/bottomNavBar.dart';
-import 'package:tugas_17_flutter/model/login_model.dart';
 import 'package:tugas_17_flutter/view/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  final AuthService _authService = AuthService();
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -24,17 +24,18 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final LoginUserModel response = await AuthenticationAPI.loginUser(
+      final response = await _authService.loginUser(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
       if (mounted) {
         FocusScope.of(context).unfocus();
-        final message = response.message;
+        final message = response['message'] ?? "Login berhasil";
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.green),
         );
+
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(builder: (context) => const BottomNavigator()),
           (Route<dynamic> route) => false,
