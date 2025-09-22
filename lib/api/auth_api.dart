@@ -45,6 +45,57 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> forgotPassword({required String email}) async {
+    final url = Uri.parse(Endpoint.forgotPassword);
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Accept': 'application/json'},
+        body: {'email': email},
+      );
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return responseData;
+      } else {
+        throw responseData['message'] ?? 'Gagal mengirim OTP.';
+      }
+    } on SocketException {
+      throw 'Tidak dapat terhubung ke server.';
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPassword({
+    required String email,
+    required String otp,
+    required String password,
+  }) async {
+    final url = Uri.parse(Endpoint.resetPassword);
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Accept': 'application/json'},
+        body: {
+          'email': email,
+          'otp': otp,
+          'password': password,
+          'password_confirmation': password,
+        },
+      );
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return responseData;
+      } else {
+        throw responseData['message'] ?? 'Gagal mereset password.';
+      }
+    } on SocketException {
+      throw 'Tidak dapat terhubung ke server.';
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
   Future<Map<String, dynamic>> submitIzin({
     required String alasan,
     required String date,
@@ -77,6 +128,7 @@ class AuthService {
     }
   }
 
+  /// ✅ Register user dengan foto (multipart)
   Future<Map<String, dynamic>> registerUser({
     required String name,
     required String email,
@@ -88,31 +140,24 @@ class AuthService {
   }) async {
     final url = Uri.parse(Endpoint.register);
     try {
-      Map<String, String> body = {
-        'name': name,
-        'email': email,
-        'password': password,
-        'password_confirmation': password,
-        'jenis_kelamin': jenisKelamin,
-        'batch_id': batchId,
-        'training_id': trainingId,
-      };
+      var request = http.MultipartRequest('POST', url);
+
+      request.fields['name'] = name;
+      request.fields['email'] = email;
+      request.fields['password'] = password;
+      request.fields['password_confirmation'] = password;
+      request.fields['jenis_kelamin'] = jenisKelamin;
+      request.fields['batch_id'] = batchId;
+      request.fields['training_id'] = trainingId;
 
       if (profilePhoto != null) {
-        List<int> imageBytes = await profilePhoto.readAsBytes();
-        String base64Image = base64Encode(imageBytes);
-        body['profile_photo'] = 'data:image/jpeg;base64,$base64Image';
+        request.files.add(
+          await http.MultipartFile.fromPath('profile_photo', profilePhoto.path),
+        );
       }
 
-      final response = await http.post(
-        url,
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        },
-        body: json.encode(body),
-      );
-
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
       final responseData = json.decode(response.body);
 
       if (response.statusCode == 200 || response.statusCode == 201) {

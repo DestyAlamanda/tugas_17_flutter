@@ -3,6 +3,10 @@ class Endpoint {
   static const String register = "$baseURL/register";
 
   static const String login = "$baseURL/login";
+  static final String logout = '$baseURL/logout';
+  static final String forgotPassword = '$baseURL/forgot-password';
+  static final String resetPassword = '$baseURL/reset-password';
+
   // Endpoint profile
   static const String profile = "$baseURL/profile";
   static const String updateProfile = "$baseURL/profile";
