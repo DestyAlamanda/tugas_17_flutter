@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:tugas_17_flutter/absen.dart';
-import 'package:tugas_17_flutter/blabla.dart';
 import 'package:tugas_17_flutter/google_map.dart';
+import 'package:tugas_17_flutter/history.dart';
+import 'package:tugas_17_flutter/izin.dart';
 import 'package:tugas_17_flutter/profile_page.dart';
 import 'package:tugas_17_flutter/view/home/home.dart' hide GoogleMapsScreen;
 
@@ -20,7 +20,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
   @override
   void initState() {
     super.initState();
-    _pages = const [HomePage(), Izin(), AbsenPage(), ProfilePage()];
+    _pages = const [HomePage(), History(), IzinPage(), ProfilePage()];
   }
 
   void _onItemTapped(int index) {
@@ -59,7 +59,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
             children: [
               // Kiri
               _buildTabItem(index: 0, icon: Icons.home, label: "Home"),
-              _buildTabItem(index: 1, icon: Icons.info, label: "Tentang"),
+              _buildTabItem(index: 1, icon: Icons.info, label: "Riwayat"),
 
               const SizedBox(width: 48), // ruang untuk FAB
               // Kanan

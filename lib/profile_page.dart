@@ -11,16 +11,14 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   User? userData;
+  final AuthService _authService = AuthService();
 
   @override
   void initState() {
     super.initState();
-
-    // Inisialisasi date formatting & load data
     _loadUserData();
   }
 
-  final AuthService _authService = AuthService();
   // Load user profile
   Future<void> _loadUserData() async {
     try {
@@ -38,6 +36,38 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  // Reusable menu item
+  Widget _menuItem(IconData icon, String title, {VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF122C29),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: Colors.white, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -52,13 +82,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   CircleAvatar(
                     radius: 40,
+                    backgroundColor: Colors.orange,
                     child: const Icon(
                       Icons.person_rounded,
                       size: 30,
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 14),
+                  const SizedBox(height: 14),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -75,16 +106,13 @@ class _ProfilePageState extends State<ProfilePage> {
                         "Batch: ${userData?.batchKe ?? '...'} ",
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.normal,
                           color: Colors.white70,
                         ),
                       ),
-
                       Text(
                         "Training: ${userData?.trainingTitle ?? '...'}",
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.normal,
                           color: Colors.white70,
                         ),
                       ),
@@ -117,89 +145,36 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // LOKASI ABSEN
-                        const Text(
-                          "Lokasi Absen",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        _menuItem(
+                          Icons.edit,
+                          "Edit Profile",
+                          onTap: () {
+                            print("➡️ Edit profile diklik");
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 50,
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "jalan merdeka no 1",
-                              style: TextStyle(color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
+                        _menuItem(
+                          Icons.edit,
+                          "Reset",
+                          onTap: () {
+                            print("➡️ Edit profile diklik");
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 50,
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "jalan merdeka no 1",
-                              style: TextStyle(color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
+                        _menuItem(
+                          Icons.info,
+                          "Tentang Aplikasi",
+                          onTap: () {
+                            print("➡️ Tentang aplikasi diklik");
+                          },
                         ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 50,
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "jalan merdeka no 1",
-                              style: TextStyle(color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Container(
-                          height: 50,
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "jalan merdeka no 1",
-                              style: TextStyle(color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
+                        _menuItem(
+                          Icons.logout,
+                          "Keluar",
+                          onTap: () {
+                            print("➡️ Logout diklik");
+                          },
                         ),
 
-                        const SizedBox(height: 500), // biar bisa discroll
+                        const SizedBox(height: 300), // biar bisa discroll
                       ],
                     ),
                   ),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/google_map.dart';
+import 'package:tugas_17_flutter/history.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 
@@ -293,8 +294,8 @@ class _HomePageState extends State<HomePage> {
 
                         // RIWAYAT ABSEN
                         Row(
-                          children: const [
-                            Text(
+                          children: [
+                            const Text(
                               "Riwayat Absen",
                               style: TextStyle(
                                 color: Colors.white,
@@ -302,12 +303,22 @@ class _HomePageState extends State<HomePage> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Spacer(),
-                            Text(
-                              "Lihat Semua",
-                              style: TextStyle(
-                                color: Color(0xFF469EA0),
-                                fontSize: 16,
+                            const Spacer(),
+                            InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const History(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "Lihat Semua",
+                                style: TextStyle(
+                                  color: Color(0xFF469EA0),
+                                  fontSize: 16,
+                                ),
                               ),
                             ),
                           ],

@@ -45,6 +45,38 @@ class AuthService {
     }
   }
 
+  Future<Map<String, dynamic>> submitIzin({
+    required String alasan,
+    required String date,
+  }) async {
+    final token = await PreferenceHandler.getToken();
+    if (token == null) throw 'Token tidak ditemukan. Silakan login kembali.';
+
+    final url = Uri.parse(Endpoint.submitIzin);
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'alasan_izin': alasan, 'date': date}),
+      );
+
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return responseData;
+      } else {
+        throw responseData['message'] ?? 'Gagal mengajukan izin.';
+      }
+    } on SocketException {
+      throw 'Tidak dapat terhubung ke server.';
+    } catch (e) {
+      throw 'Error di submitIzin: $e';
+    }
+  }
+
   Future<Map<String, dynamic>> registerUser({
     required String name,
     required String email,
