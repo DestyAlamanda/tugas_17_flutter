@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/model/batch.dart';
 import 'package:tugas_17_flutter/model/training.dart';
@@ -28,6 +31,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   final AuthService _authService = AuthService();
 
+  /// 🔑 Tambahan untuk foto
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +62,17 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
+  /// 🔑 Fungsi pilih gambar
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+    if (pickedFile != null) {
+      setState(() => _profileImage = File(pickedFile.path));
+    }
+  }
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedGender == null ||
@@ -76,6 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
         jenisKelamin: _selectedGender!,
         batchId: _selectedBatch!.id.toString(),
         trainingId: _selectedTraining!.id.toString(),
+        profilePhoto: _profileImage, // 🔑 kirim foto
       );
 
       if (mounted) {
@@ -112,21 +131,50 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const SizedBox(height: 30),
 
-                    const Icon(Icons.inbox, color: Colors.white, size: 48),
-                    const SizedBox(height: 12),
-                    const Text(
-                      "Registration",
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      "Create your personal account now to access all",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    // const Icon(Icons.inbox, color: Colors.white, size: 48),
+                    // const SizedBox(height: 12),
+                    // const Text(
+                    //   "Registration",
+                    //   style: TextStyle(
+                    //     fontSize: 22,
+                    //     fontWeight: FontWeight.bold,
+                    //     color: Colors.white,
+                    //   ),
+                    // ),
+                    // const SizedBox(height: 8),
+                    // const Text(
+                    //   "Create your personal account now to access all",
+                    //   textAlign: TextAlign.center,
+                    //   style: TextStyle(color: Colors.white70, fontSize: 14),
+                    // ),
+                    // const SizedBox(height: 20),
+
+                    /// 🔑 Tambahan UI foto profil
+                    Column(
+                      children: [
+                        GestureDetector(
+                          onTap:
+                              _pickImage, // klik lingkaran langsung pilih foto
+                          child: CircleAvatar(
+                            radius: 52,
+                            backgroundColor: Colors.white24,
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundImage: _profileImage != null
+                                  ? FileImage(_profileImage!)
+                                  : null,
+                              backgroundColor: Colors.white,
+                              child: _profileImage == null
+                                  ? const Icon(
+                                      Icons.person_add_alt_1_outlined,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
 

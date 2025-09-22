@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
+import 'package:tugas_17_flutter/utils/shared_preference.dart';
+import 'package:tugas_17_flutter/view/auth/login_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -34,6 +36,71 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print('❌ Gagal load data user: $e');
     }
+  }
+
+  // 🔑 Fungsi Logout
+  static void handleLogout(BuildContext context) async {
+    await PreferenceHandler.removeLogin();
+
+    // Tampilkan snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("✅ Berhasil keluar dari akun"),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    // Pindah ke LoginScreen
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  // 🔔 Dialog konfirmasi logout
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.grey[900],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            "Konfirmasi Logout",
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            "Apakah kamu yakin ingin keluar?",
+            style: TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "Batal",
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context); // tutup dialog
+                handleLogout(context); // lanjut logout
+              },
+              child: const Text("Ya, Keluar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   // Reusable menu item
@@ -153,10 +220,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           },
                         ),
                         _menuItem(
-                          Icons.edit,
+                          Icons.refresh,
                           "Reset",
                           onTap: () {
-                            print("➡️ Edit profile diklik");
+                            print("➡️ Reset diklik");
                           },
                         ),
                         _menuItem(
@@ -170,7 +237,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Icons.logout,
                           "Keluar",
                           onTap: () {
-                            print("➡️ Logout diklik");
+                            _showLogoutDialog(context);
                           },
                         ),
 

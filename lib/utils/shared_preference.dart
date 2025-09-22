@@ -33,4 +33,11 @@ class PreferenceHandler {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_keyIsLoggedIn) ?? false;
   }
+
+  /// 🔑 Hapus semua data login (token & status login)
+  static Future<void> removeLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyToken);
+    await prefs.remove(_keyIsLoggedIn);
+  }
 }
