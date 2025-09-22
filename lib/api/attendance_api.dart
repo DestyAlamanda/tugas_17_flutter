@@ -187,7 +187,7 @@ class AttendanceService {
     }
   }
 
-  /// Get attendance history
+  /// Get attendance history (sudah diurutkan terbaru duluan)
   Future<List<AttendanceRecord>> getAttendanceHistory({
     String? startDate,
     String? endDate,
@@ -209,8 +209,26 @@ class AttendanceService {
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body)['data'];
-        return data.map((json) => AttendanceRecord.fromJson(json)).toList();
+        final body = json.decode(response.body);
+
+        List<AttendanceRecord> records = [];
+
+        if (body['data'] is List) {
+          records = (body['data'] as List)
+              .map((e) => AttendanceRecord.fromJson(e))
+              .toList();
+        } else if (body['data'] is Map) {
+          records = [AttendanceRecord.fromJson(body['data'])];
+        }
+
+        // 🔹 Urutkan berdasarkan attendanceDate terbaru
+        records.sort((a, b) {
+          final dateA = a.attendanceDate ?? DateTime(1900);
+          final dateB = b.attendanceDate ?? DateTime(1900);
+          return dateB.compareTo(dateA);
+        });
+
+        return records;
       } else {
         throw 'Gagal memuat riwayat absensi.';
       }

@@ -8,6 +8,7 @@ class AttendanceRecord {
   final String checkOutTime;
   final String status;
   final String? alasanIzin;
+  final DateTime? attendanceDate; // ✅ Tambahan untuk sorting
 
   AttendanceRecord({
     required this.id,
@@ -17,6 +18,7 @@ class AttendanceRecord {
     required this.checkOutTime,
     required this.status,
     this.alasanIzin,
+    this.attendanceDate,
   });
 
   bool get isLate {
@@ -50,6 +52,7 @@ class AttendanceRecord {
       checkOutTime: json['check_out_time'] ?? '-',
       status: json['status'] ?? 'masuk',
       alasanIzin: json['alasan_izin'],
+      attendanceDate: attendanceDate, // ✅ simpan aslinya
     );
   }
 
@@ -62,6 +65,7 @@ class AttendanceRecord {
       'check_out_time': checkOutTime,
       'status': status,
       'alasan_izin': alasanIzin,
+      'attendance_date': attendanceDate?.toIso8601String(), // ✅ simpan ISO date
     };
   }
 }

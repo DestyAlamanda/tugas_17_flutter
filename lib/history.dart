@@ -438,20 +438,7 @@ class _HistoryState extends State<History> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: isLate ? const Color(0xFF332F1A) : const Color(0xFF122C29),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              timeStatus,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isLate ? Colors.yellow : AppColors.primary,
-              ),
-            ),
-          ),
+          // 👉 Badge dihapus, jadi tidak ada container kuning "late/on time"
         ],
       ),
     );
