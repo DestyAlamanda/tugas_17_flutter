@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/bottomNavBar.dart';
 import 'package:tugas_17_flutter/extensions/navigator.dart';
-import 'package:tugas_17_flutter/view/auth/forgot_password.dart';
 import 'package:tugas_17_flutter/view/auth/register_screen.dart';
+import 'package:tugas_17_flutter/view/password/forgot_password.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_text_form_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -75,17 +77,10 @@ class _LoginScreenState extends State<LoginScreen> {
               children: [
                 const SizedBox(height: 40),
 
-                // Logo
-                // Center(
-                //   child: Image.asset(
-                //     "assets/logo.png", // ganti dengan logo kamu
-                //     height: 60,
-                //   ),
-                // ),
                 const SizedBox(height: 24),
 
                 const Text(
-                  "Login",
+                  "Masuk",
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -94,17 +89,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  "Welcome back! Enter your email address and\npassword ",
+                  "Selamat datang kembali! Masukkan email dan\nkata sandi untuk melanjutkan.",
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
                 ),
                 const SizedBox(height: 40),
 
-                // Ilustrasi
-                // Image.asset(
-                //   "assets/illustration.png", // ganti dengan ilustrasi kamu
-                //   height: 160,
-                // ),
                 const SizedBox(height: 40),
 
                 // Email
@@ -119,20 +109,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                CustomTextFormField(
                   controller: _emailController,
-                  style: const TextStyle(color: Colors.white),
+                  hintText: "Masukkan Email",
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    hintText: "Email or Phone Number",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white24),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF22C1C3)),
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return "Email tidak boleh kosong";
@@ -151,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    "PASSWORD",
+                    "KATA SANDI",
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -159,46 +139,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                CustomTextFormField(
                   controller: _passwordController,
-                  style: const TextStyle(color: Colors.white),
+                  hintText: "Masukkan Kata Sandi",
                   obscureText: !_isPasswordVisible,
-                  decoration: InputDecoration(
-                    hintText: "Password",
-                    hintStyle: const TextStyle(color: Colors.white54),
-                    enabledBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Colors.white24),
-                    ),
-                    focusedBorder: const UnderlineInputBorder(
-                      borderSide: BorderSide(color: Color(0xFF22C1C3)),
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _isPasswordVisible
-                            ? Icons.visibility
-                            : Icons.visibility_off,
-                        color: Colors.white54,
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
-                    ),
-                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return "Password tidak boleh kosong";
+                      return "Kata sandi tidak boleh kosong";
                     }
                     if (value.length < 6) {
-                      return "Password minimal 6 karakter";
+                      return "Kata sandi minimal 6 karakter";
                     }
                     return null;
                   },
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.white54,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
+
                 const SizedBox(height: 12),
 
-                // Forget Password
+                // Lupa Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -208,7 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: const Text(
-                      "Forgot Password?",
+                      "Lupa Kata Sandi?",
                       style: TextStyle(color: Colors.white70),
                     ),
                   ),
@@ -216,37 +187,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 24),
 
-                // Tombol Submit
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF22C1C3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            "Submit",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                // Tombol Masuk
+                CustomButton(
+                  label: "Masuk",
+                  isLoading: _isLoading,
+                  onPressed: _handleLogin,
                 ),
                 const SizedBox(height: 24),
 
-                // Register
+                // Daftar
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don’t have access? ",
+                      "Belum punya akun? ",
                       style: TextStyle(color: Colors.white),
                     ),
                     GestureDetector(
@@ -259,7 +213,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         );
                       },
                       child: const Text(
-                        "Click here.",
+                        "Daftar",
                         style: TextStyle(
                           color: Color(0xFF22C1C3),
                           fontWeight: FontWeight.bold,

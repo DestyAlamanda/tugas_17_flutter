@@ -4,7 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pinput/pinput.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
+import 'package:tugas_17_flutter/utils/app_color.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_text_form_field.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -119,7 +122,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.background,
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -136,7 +139,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.pink,
+                      color: AppColors.teal,
                       letterSpacing: 2,
                     ),
                   ),
@@ -145,25 +148,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   const SizedBox(height: 32),
                   _buildPasswordFields(),
                   const SizedBox(height: 32),
-                  _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.pink,
-                            ),
-                            onPressed: _handleResetPassword,
-                            child: const Text(
-                              'Reset Password',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
+                  CustomButton(
+                    label: "Reset Password",
+                    onPressed: _handleResetPassword,
+                    isLoading: _isLoading,
+                  ),
                 ],
               ),
             ),
@@ -181,7 +170,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
-            color: Colors.black,
+            color: AppColors.textPrimary,
           ),
           textAlign: TextAlign.center,
         ),
@@ -189,14 +178,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         RichText(
           textAlign: TextAlign.center,
           text: TextSpan(
-            style: const TextStyle(color: Colors.black54, fontSize: 16),
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 16,
+            ),
             children: <TextSpan>[
               const TextSpan(text: 'Masukkan kode OTP yang dikirim ke\n'),
               TextSpan(
                 text: widget.email,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.pink,
+                  color: AppColors.teal,
                 ),
               ),
             ],
@@ -250,23 +242,20 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   Widget _buildPasswordFields() {
     return Column(
       children: [
-        TextFormField(
+        CustomTextFormField(
           controller: _passwordController,
+          hintText: "Password Baru",
           obscureText: !_isPasswordVisible,
-          decoration: InputDecoration(
-            labelText: 'Password Baru',
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isPasswordVisible
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: Colors.grey,
-              ),
-              onPressed: () =>
-                  setState(() => _isPasswordVisible = !_isPasswordVisible),
+          prefixIcon: const Icon(Icons.lock_outline, color: Colors.white54),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isPasswordVisible
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              color: Colors.grey,
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            onPressed: () =>
+                setState(() => _isPasswordVisible = !_isPasswordVisible),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -283,24 +272,21 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           },
         ),
         const SizedBox(height: 16),
-        TextFormField(
+        CustomTextFormField(
           controller: _confirmPasswordController,
+          hintText: "Konfirmasi Password",
           obscureText: !_isConfirmPasswordVisible,
-          decoration: InputDecoration(
-            labelText: 'Konfirmasi Password',
-            prefixIcon: const Icon(Icons.lock_outline),
-            suffixIcon: IconButton(
-              icon: Icon(
-                _isConfirmPasswordVisible
-                    ? Icons.visibility_off_outlined
-                    : Icons.visibility_outlined,
-                color: Colors.grey,
-              ),
-              onPressed: () => setState(
-                () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible,
-              ),
+          prefixIcon: const Icon(Icons.lock_outline, color: Colors.white54),
+          suffixIcon: IconButton(
+            icon: Icon(
+              _isConfirmPasswordVisible
+                  ? Icons.visibility_off_outlined
+                  : Icons.visibility_outlined,
+              color: Colors.grey,
             ),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            onPressed: () => setState(
+              () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible,
+            ),
           ),
           validator: (v) {
             if (v != _passwordController.text) {

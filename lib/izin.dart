@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
 
 class AppColors {
-  static const primary = Color(0xFF4effca);
+  static const primary = Color(0xFF58C5C8);
   static const textPrimary = Colors.black87;
 }
 
@@ -146,7 +147,7 @@ class _IzinPageState extends State<IzinPage>
                       children: [
                         // TAB 1 - Ajukan Izin
                         SingleChildScrollView(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -212,25 +213,10 @@ class _IzinPageState extends State<IzinPage>
                               const SizedBox(height: 30),
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 14,
-                                    ),
-                                  ),
-                                  onPressed: _isLoading ? null : _kirimIzin,
-                                  child: _isLoading
-                                      ? const CircularProgressIndicator(
-                                          color: Colors.black,
-                                        )
-                                      : const Text(
-                                          "Kirim Izin",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
+                                child: CustomButton(
+                                  label: "Kirim Izin",
+                                  isLoading: _isLoading,
+                                  onPressed: _kirimIzin,
                                 ),
                               ),
                             ],
@@ -292,14 +278,23 @@ class _IzinPageState extends State<IzinPage>
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: ListTile(
-                                    leading: const Icon(
-                                      Icons.event_note,
-                                      color: AppColors.primary,
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(12),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.event_rounded,
+                                        color: Color(0xFF58C5C8),
+                                        size: 24,
+                                      ),
                                     ),
                                     title: Text(
                                       "${izin.day}, ${izin.date}",
                                       style: const TextStyle(
                                         color: Colors.white,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     subtitle: Text(

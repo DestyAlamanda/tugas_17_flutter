@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/history.dart';
 import 'package:tugas_17_flutter/izin.dart';
-import 'package:tugas_17_flutter/profile_page.dart';
 import 'package:tugas_17_flutter/view/absen/google_map.dart';
 import 'package:tugas_17_flutter/view/home/home.dart' hide GoogleMapsScreen;
+import 'package:tugas_17_flutter/view/profile/profile_page.dart';
 
 class BottomNavigator extends StatefulWidget {
   const BottomNavigator({super.key});
@@ -37,7 +37,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF469EA0),
+        backgroundColor: Color(0xFF58C5C8),
         shape: const CircleBorder(),
         onPressed: () {
           Navigator.push(
@@ -93,7 +93,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isSelected ? const Color(0xFF469EA0) : Colors.grey,
+              color: isSelected ? Color(0xFF58C5C8) : Colors.grey,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

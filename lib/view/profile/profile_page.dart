@@ -3,9 +3,9 @@ import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/extensions/navigator.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/utils/shared_preference.dart';
-import 'package:tugas_17_flutter/view/auth/forgot_password.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
-import 'package:tugas_17_flutter/view/edit_profile.dart';
+import 'package:tugas_17_flutter/view/password/forgot_password.dart';
+import 'package:tugas_17_flutter/view/profile/edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -98,7 +98,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.pop(context); // tutup dialog
                 handleLogout(context); // lanjut logout
               },
-              child: const Text("Ya, Keluar"),
+              child: const Text(
+                "Ya, Keluar",
+                style: TextStyle(color: Colors.white70),
+              ),
             ),
           ],
         );
@@ -122,10 +125,10 @@ class _ProfilePageState extends State<ProfilePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF122C29),
+                color: Colors.white.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: Colors.white, size: 24),
+              child: Icon(icon, color: Color(0xFF58C5C8), size: 24),
             ),
             const SizedBox(width: 16),
             Text(
@@ -249,13 +252,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             context.push(const ForgotPasswordScreen());
                           },
                         ),
-                        _menuItem(
-                          Icons.info,
-                          "Tentang Aplikasi",
-                          onTap: () {
-                            print("➡️ Tentang aplikasi diklik");
-                          },
-                        ),
+                        // _menuItem(
+                        //   Icons.info,
+                        //   "Tentang Aplikasi",
+                        //   onTap: () {
+                        //     print("➡️ Tentang aplikasi diklik");
+                        //   },
+                        // ),
                         _menuItem(
                           Icons.logout,
                           "Keluar",

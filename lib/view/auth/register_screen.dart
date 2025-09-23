@@ -8,7 +8,10 @@ import 'package:tugas_17_flutter/extensions/navigator.dart';
 import 'package:tugas_17_flutter/model/batch2.dart';
 import 'package:tugas_17_flutter/model/register_model.dart';
 import 'package:tugas_17_flutter/model/training2.dart';
+import 'package:tugas_17_flutter/utils/app_color.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_text_form_field.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -56,7 +59,7 @@ class _RegisterPageState extends State<RegisterPage> {
     } catch (e) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Gagal load data dropdown: $e")));
+      ).showSnackBar(SnackBar(content: Text("Gagal memuat data dropdown: $e")));
     }
   }
 
@@ -83,7 +86,9 @@ class _RegisterPageState extends State<RegisterPage> {
         selectedBatch == null ||
         selectedTraining == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Pilih gender, batch, dan training")),
+        const SnackBar(
+          content: Text("Pilih jenis kelamin, batch, dan pelatihan"),
+        ),
       );
       return;
     }
@@ -110,7 +115,6 @@ class _RegisterPageState extends State<RegisterPage> {
         trainingId: selectedTraining!.id!,
       );
 
-      // PreferenceHandler.saveToken(result.data?.token ?? "");
       setState(() {
         user = result;
       });
@@ -138,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 10),
               Text(
-                result.message ?? "Register Berhasil!",
+                result.message ?? "Pendaftaran berhasil!",
                 style: const TextStyle(fontSize: 16, color: Colors.white),
               ),
             ],
@@ -164,7 +168,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 10),
               Text(
-                "Gagal daftar: $errorMessage",
+                "Gagal mendaftar: $errorMessage",
                 style: const TextStyle(color: Colors.white),
               ),
             ],
@@ -208,23 +212,30 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 32),
 
-              // Name
-              _labelText("NAME"),
-              _inputField(controller: nameController, hint: "Name"),
+              // Nama
+              _labelText("NAMA"),
+              CustomTextFormField(
+                controller: nameController,
+                hintText: "Masukkan nama lengkap",
+              ),
               const SizedBox(height: 16),
 
               // Email
               _labelText("EMAIL"),
-              _inputField(controller: emailController, hint: "Email"),
+              CustomTextFormField(
+                controller: emailController,
+                hintText: "Masukkan email",
+                keyboardType: TextInputType.emailAddress,
+              ),
               const SizedBox(height: 16),
-
-              // Password
-              _labelText("PASSWORD"),
-              _inputField(
+              // Kata sandi
+              _labelText("KATA SANDI"),
+              CustomTextFormField(
                 controller: passController,
-                hint: "Password",
-                obscure: hidePassword,
-                suffix: IconButton(
+                hintText: "Masukkan kata sandi",
+                obscureText: hidePassword,
+
+                suffixIcon: IconButton(
                   icon: Icon(
                     hidePassword ? Icons.visibility_off : Icons.visibility,
                     color: Colors.grey,
@@ -251,7 +262,14 @@ class _RegisterPageState extends State<RegisterPage> {
                     )
                     .toList(),
                 onChanged: (val) => setState(() => selectedTraining = val),
-                decoration: _underlineInputDecoration(""),
+                decoration: const InputDecoration(
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.teal),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.teal),
+                  ),
+                ),
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
@@ -273,12 +291,19 @@ class _RegisterPageState extends State<RegisterPage> {
                     )
                     .toList(),
                 onChanged: (val) => setState(() => selectedBatch = val),
-                decoration: _underlineInputDecoration(""),
+                decoration: const InputDecoration(
+                  enabledBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.teal),
+                  ),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.teal),
+                  ),
+                ),
                 style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
 
-              // Gender
+              // Jenis kelamin
               _labelText("JENIS KELAMIN"),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
@@ -308,35 +333,23 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 32),
 
-              // Tombol Next
-              ElevatedButton(
-                onPressed: isLoading ? null : registerUser,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal,
-                  minimumSize: const Size(double.infinity, 50),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: isLoading
-                    ? const CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      )
-                    : const Text(
-                        "Next",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
+              // Tombol Daftar
+              // Ganti bagian ElevatedButton lama dengan ini
+              CustomButton(
+                label: "Daftar",
+                onPressed: registerUser,
+                isLoading: isLoading,
               ),
+
               const SizedBox(height: 16),
 
-              // Back to login
+              // Kembali ke Login
               GestureDetector(
                 onTap: () => context.push(const LoginScreen()),
                 child: const Text(
-                  "back to Login",
+                  "Kembali ke Login",
                   style: TextStyle(
-                    color: Colors.teal,
+                    color: Color(0xFF58C5C8),
                     decoration: TextDecoration.underline,
                   ),
                 ),

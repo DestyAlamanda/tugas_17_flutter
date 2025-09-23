@@ -11,6 +11,7 @@ import 'package:tugas_17_flutter/history.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/view/absen/google_map.dart';
+import 'package:tugas_17_flutter/view/widgets/section_title.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -62,7 +63,7 @@ class _HomePageState extends State<HomePage> {
 
   void _resetForNewDay() {
     print(
-      "🔄 Reset hari baru: ${DateFormat("dd MMM yyyy").format(DateTime.now())}",
+      "🔄 Reset hari baru: ${DateFormat("dd MMM yyyy", "id_ID").format(DateTime.now())}",
     );
     setState(() {
       latestAttendance = null;
@@ -78,7 +79,7 @@ class _HomePageState extends State<HomePage> {
         userData = savedUser;
       });
     } catch (e) {
-      print('❌ Gagal load data user: $e');
+      print('❌ Gagal memuat data pengguna: $e');
     }
   }
 
@@ -92,7 +93,7 @@ class _HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      print('❌ Gagal load absensi: $e');
+      print('❌ Gagal memuat absensi: $e');
     }
   }
 
@@ -269,26 +270,16 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     child: Column(
                                       children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              latestAttendance?.checkInTime ??
-                                                  "-",
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 30,
-                                              ),
-                                            ),
-                                            Icon(
-                                              Icons.login_outlined,
-                                              size: 30,
-                                              color: Colors.green,
-                                            ),
-                                          ],
+                                        Text(
+                                          latestAttendance?.checkInTime ?? "-",
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 30,
+                                          ),
                                         ),
                                         const Text(
-                                          "Check In",
+                                          "Masuk",
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
@@ -322,7 +313,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                         ),
                                         const Text(
-                                          "Check Out",
+                                          "Pulang",
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
@@ -339,15 +330,8 @@ class _HomePageState extends State<HomePage> {
 
                         const SizedBox(height: 20),
 
-                        // ✅ Lokasi Absen dinamis
-                        const Text(
-                          "Lokasi Absen",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        // Lokasi Absen
+                        sectionTitle("Lokasi Absen"),
                         const SizedBox(height: 16),
                         Container(
                           width: double.infinity,
@@ -357,20 +341,49 @@ class _HomePageState extends State<HomePage> {
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                _currentAddress,
-                                style: const TextStyle(color: Colors.white),
-                                overflow: TextOverflow.ellipsis,
+                              // Ikon + Jarak
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Colors.white70,
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    "Jarak ke PPKD: ${(_distanceToPpkd / 1000).toStringAsFixed(2)} km",
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                "Jarak ke PPKD: ${_distanceToPpkd.toStringAsFixed(1)} m",
-                                style: TextStyle(
+                              SizedBox(height: 10),
+                              // Status Onsite / Offsite
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
                                   color: _distanceToPpkd <= _allowedRadius
-                                      ? Colors.greenAccent
-                                      : Colors.redAccent,
+                                      ? Colors.green.withOpacity(0.2)
+                                      : Colors.red.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Text(
+                                  _distanceToPpkd <= _allowedRadius
+                                      ? "Di lokasi"
+                                      : "Di luar lokasi",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: _distanceToPpkd <= _allowedRadius
+                                        ? Color(0xFF58C5C8)
+                                        : Colors.redAccent,
+                                  ),
                                 ),
                               ),
                             ],
@@ -382,14 +395,7 @@ class _HomePageState extends State<HomePage> {
                         // Riwayat Absen
                         Row(
                           children: [
-                            const Text(
-                              "Riwayat Absen",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            sectionTitle("Riwayat Absen"),
                             const Spacer(),
                             InkWell(
                               onTap: () {
@@ -403,7 +409,7 @@ class _HomePageState extends State<HomePage> {
                               child: const Text(
                                 "Lihat Semua",
                                 style: TextStyle(
-                                  color: Color(0xFF469EA0),
+                                  color: Color(0xFF58C5C8),
                                   fontSize: 16,
                                 ),
                               ),
@@ -427,12 +433,12 @@ class _HomePageState extends State<HomePage> {
                                 Container(
                                   padding: const EdgeInsets.all(12),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF122C29),
+                                    color: Colors.white.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: const Icon(
                                     Icons.event_rounded,
-                                    color: Color(0xFF4effca),
+                                    color: Color(0xFF58C5C8),
                                     size: 24,
                                   ),
                                 ),
@@ -445,8 +451,8 @@ class _HomePageState extends State<HomePage> {
                                     children: [
                                       Text(
                                         latestAttendance!.status == 'masuk'
-                                            ? "Check In"
-                                            : "Check Out",
+                                            ? "Masuk"
+                                            : "Pulang",
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 20,
@@ -476,13 +482,13 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   child: Text(
                                     latestAttendance!.isLate
-                                        ? "late"
-                                        : "on time",
+                                        ? "Terlambat"
+                                        : "Tepat waktu",
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       color: latestAttendance!.isLate
                                           ? Colors.yellow
-                                          : const Color(0xFF4effca),
+                                          : Color(0xFF58C5C8),
                                     ),
                                   ),
                                 ),

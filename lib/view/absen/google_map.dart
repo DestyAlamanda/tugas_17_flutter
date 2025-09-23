@@ -271,7 +271,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
       appBar: AppBar(
         backgroundColor: const Color(0xFF111216),
         title: const Text(
-          "Attendance",
+          "Absensi",
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
@@ -387,7 +387,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                           Align(
                             alignment: Alignment.topLeft,
                             child: Text(
-                              _hasCheckedIn ? "Punch Out" : "Punch In",
+                              _hasCheckedIn ? "Keluar" : "Masuk",
                               style: const TextStyle(
                                 fontSize: 19,
                                 color: Colors.white,
@@ -411,7 +411,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                                       }
                                     },
                                     child: _buildCircleButton(
-                                      _hasCheckedIn ? "CHECK OUT" : "CHECK IN",
+                                      _hasCheckedIn ? "Keluar" : "Masuk",
                                     ),
                                   ),
                                 );

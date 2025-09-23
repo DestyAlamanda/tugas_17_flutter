@@ -6,7 +6,7 @@ import 'package:tugas_17_flutter/model/attendance_stats.dart';
 
 // Kalau punya file AppColors, pake AppColors.primary
 class AppColors {
-  static const primary = Color(0xFF4effca);
+  static const primary = Color(0xFF58C5C8);
   static const textPrimary = Colors.black87;
 }
 
@@ -24,7 +24,7 @@ class _HistoryState extends State<History> {
   List<AttendanceRecord> records = [];
   bool isLoading = true;
 
-  // Date range
+  // Rentang tanggal
   DateTimeRange? _selectedDateRange;
 
   @override
@@ -51,7 +51,7 @@ class _HistoryState extends State<History> {
         resultRecords = await _attendanceService.getAttendanceHistory();
       }
 
-      // Hitung statistik dari records
+      // Hitung statistik
       final hadir = resultRecords.where((r) => r.status == "masuk").length;
       final izin = resultRecords.where((r) => r.status == "izin").length;
       final total = resultRecords.length;
@@ -66,12 +66,12 @@ class _HistoryState extends State<History> {
         isLoading = false;
       });
     } catch (e) {
-      print("❌ Gagal load history: $e");
+      print("❌ Gagal memuat riwayat: $e");
       setState(() => isLoading = false);
     }
   }
 
-  /// Picker tanggal
+  /// Pilih rentang tanggal
   Future<void> _pickDateRange() async {
     final dateRange = await showDateRangePicker(
       context: context,
@@ -108,10 +108,10 @@ class _HistoryState extends State<History> {
   Widget build(BuildContext context) {
     String fromDate = _selectedDateRange != null
         ? DateFormat('dd MMM yyyy').format(_selectedDateRange!.start)
-        : "Start";
+        : "Mulai";
     String toDate = _selectedDateRange != null
         ? DateFormat('dd MMM yyyy').format(_selectedDateRange!.end)
-        : "End";
+        : "Selesai";
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
@@ -132,12 +132,12 @@ class _HistoryState extends State<History> {
                     ),
                     child: Column(
                       children: [
-                        // Judul + icon calendar
+                        // Judul + ikon kalender
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text(
-                              "History",
+                              "Riwayat",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 25,
@@ -157,7 +157,7 @@ class _HistoryState extends State<History> {
                         ),
                         const SizedBox(height: 20),
 
-                        // From - To
+                        // Dari - Sampai
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -165,7 +165,7 @@ class _HistoryState extends State<History> {
                               child: Column(
                                 children: [
                                   const Text(
-                                    "From : ",
+                                    "Dari : ",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -214,7 +214,7 @@ class _HistoryState extends State<History> {
                               child: Column(
                                 children: [
                                   const Text(
-                                    "To : ",
+                                    "Sampai : ",
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
@@ -288,21 +288,21 @@ class _HistoryState extends State<History> {
                                     Expanded(
                                       child: _buildBox(
                                         "${stats!.totalMasuk}",
-                                        "hadir",
+                                        "Hadir",
                                       ),
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: _buildBox(
                                         "${stats!.totalIzin}",
-                                        "izin",
+                                        "Izin",
                                       ),
                                     ),
                                     const SizedBox(width: 10),
                                     Expanded(
                                       child: _buildBox(
                                         "${stats!.totalAbsen}",
-                                        "total",
+                                        "Total",
                                       ),
                                     ),
                                   ],
@@ -311,7 +311,7 @@ class _HistoryState extends State<History> {
                             const SizedBox(height: 30),
 
                             const Text(
-                              "Riwayat Absen",
+                              "Riwayat Absensi",
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 20,
@@ -333,14 +333,14 @@ class _HistoryState extends State<History> {
                                   final statusLabel = record.status == "izin"
                                       ? "Izin"
                                       : record.status == "masuk"
-                                      ? "Check In"
-                                      : "Check Out";
+                                      ? "Masuk"
+                                      : "Pulang";
 
                                   final timeStatus = record.isLate
-                                      ? "late"
+                                      ? "Terlambat"
                                       : record.status == "izin"
                                       ? record.alasanIzin ?? "-"
-                                      : "on time";
+                                      : "Tepat Waktu";
 
                                   return Padding(
                                     padding: const EdgeInsets.only(bottom: 10),
@@ -396,7 +396,7 @@ class _HistoryState extends State<History> {
     );
   }
 
-  // Riwayat card
+  // Kartu riwayat
   Widget _buildHistoryCard(
     String status,
     String date,
@@ -417,7 +417,7 @@ class _HistoryState extends State<History> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF122C29),
+              color: Colors.white.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
@@ -445,7 +445,7 @@ class _HistoryState extends State<History> {
               ],
             ),
           ),
-          // 👉 Badge dihapus, jadi tidak ada container kuning "late/on time"
+          // 👉 badge waktu (terlambat/tepat waktu/alasan izin) bisa ditambahkan lagi kalau perlu
         ],
       ),
     );
