@@ -27,6 +27,10 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
 
   bool _hasCheckedIn = false; // state untuk checkin/checkout
 
+  // ✅ Lokasi fix PPKD + radius (meter)
+  final gmaps.LatLng _ppkdLocation = const gmaps.LatLng(-6.200000, 106.816666);
+  final double _allowedRadius = 20;
+
   @override
   void initState() {
     super.initState();
@@ -101,6 +105,28 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
   Future<void> _handleCheckIn() async {
     try {
       await _getCurrentLocation();
+
+      // ✅ Cek jarak user ke lokasi PPKD
+      double distance = Geolocator.distanceBetween(
+        _currentPosition.latitude,
+        _currentPosition.longitude,
+        _ppkdLocation.latitude,
+        _ppkdLocation.longitude,
+      );
+
+      if (distance > _allowedRadius) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Anda berada di luar radius $_allowedRadius m dari PPKD!",
+            ),
+            backgroundColor: Colors.red[600],
+          ),
+        );
+        return;
+      }
+
       final now = DateTime.now();
       final date = DateFormat('yyyy-MM-dd').format(now);
       final time = DateFormat('HH:mm').format(now);
@@ -137,10 +163,32 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     }
   }
 
-  //  Handler Check Out
+  // Handler Check Out
   Future<void> _handleCheckOut() async {
     try {
       await _getCurrentLocation();
+
+      // ✅ Cek jarak user ke lokasi PPKD
+      double distance = Geolocator.distanceBetween(
+        _currentPosition.latitude,
+        _currentPosition.longitude,
+        _ppkdLocation.latitude,
+        _ppkdLocation.longitude,
+      );
+
+      if (distance > _allowedRadius) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Anda berada di luar radius $_allowedRadius m dari PPKD!",
+            ),
+            backgroundColor: Colors.red[600],
+          ),
+        );
+        return;
+      }
+
       final now = DateTime.now();
       final date = DateFormat('yyyy-MM-dd').format(now);
       final time = DateFormat('HH:mm').format(now);

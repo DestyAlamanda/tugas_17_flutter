@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
@@ -20,70 +22,128 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   User? userData;
   AttendanceRecord? latestAttendance;
+  List<AttendanceRecord> recentAttendances = [];
   final AttendanceService _attendanceService = AttendanceService();
   String _currentTime = DateFormat.Hms().format(DateTime.now());
+
+  DateTime _lastDate = DateTime.now();
+  final AuthService _authService = AuthService();
+
+  // ✅ lokasi user sekarang
+  String _currentAddress = "Memuat lokasi...";
+  double _distanceToPpkd = 0.0;
+  final double _allowedRadius = 20; // meter
+  final double _ppkdLat = -6.200000;
+  final double _ppkdLng = 106.816666;
 
   @override
   void initState() {
     super.initState();
 
-    // Update jam tiap detik
     Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
           _currentTime = DateFormat.Hms().format(DateTime.now());
         });
+
+        final now = DateTime.now();
+        if (now.day != _lastDate.day) {
+          _lastDate = now;
+          _resetForNewDay();
+        }
       }
     });
 
-    // Inisialisasi date formatting & load data
     initializeDateFormatting('id_ID', null).then((_) {
       _loadUserData();
-      _loadLatestAttendance();
+      _loadRecentAttendances();
+      _getCurrentLocation(); // ✅ ambil lokasi saat ini
     });
   }
 
-  final AuthService _authService = AuthService();
-  // Load user profile
+  void _resetForNewDay() {
+    print(
+      "🔄 Reset hari baru: ${DateFormat("dd MMM yyyy").format(DateTime.now())}",
+    );
+    setState(() {
+      latestAttendance = null;
+      recentAttendances.clear();
+    });
+    _loadRecentAttendances();
+  }
+
   Future<void> _loadUserData() async {
     try {
       final savedUser = await _authService.getUserProfile();
       setState(() {
         userData = savedUser;
       });
-
-      print("✅ User data: ${savedUser.name}");
-      print(
-        "Batch: ${savedUser.batchKe} | Training: ${savedUser.trainingTitle}",
-      );
     } catch (e) {
       print('❌ Gagal load data user: $e');
     }
   }
 
-  // Load absensi hari ini
-  Future<void> _loadLatestAttendance() async {
+  Future<void> _loadRecentAttendances() async {
     try {
-      final todayData = await _attendanceService.getTodayAttendance();
-      if (todayData['data'] != null) {
+      final resultRecords = await _attendanceService.getAttendanceHistory();
+      if (resultRecords.isNotEmpty) {
         setState(() {
-          latestAttendance = AttendanceRecord.fromJson(todayData['data']);
+          recentAttendances = resultRecords.take(4).toList();
+          latestAttendance = resultRecords.first;
         });
       }
     } catch (e) {
-      print('❌ Gagal load absensi hari ini: $e');
+      print('❌ Gagal load absensi: $e');
     }
   }
 
-  // Buka Google Maps
+  Future<void> _getCurrentLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      permission = await Geolocator.requestPermission();
+      if (permission != LocationPermission.whileInUse &&
+          permission != LocationPermission.always) {
+        return;
+      }
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+    Placemark place = placemarks[0];
+
+    double distance = Geolocator.distanceBetween(
+      position.latitude,
+      position.longitude,
+      _ppkdLat,
+      _ppkdLng,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _currentAddress =
+          "${place.street}, ${place.subLocality}, ${place.locality}, ${place.country}";
+      _distanceToPpkd = distance;
+    });
+  }
+
   Future<void> _openGoogleMaps() async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const GoogleMapsScreen()),
     );
-
     if (result != null) {
-      await _loadLatestAttendance();
+      await _loadRecentAttendances();
+      await _getCurrentLocation(); // refresh lokasi
     }
   }
 
@@ -129,7 +189,6 @@ class _HomePageState extends State<HomePage> {
                         "Batch: ${userData?.batchKe ?? '...'} | Training: ${userData?.trainingTitle ?? '...'}",
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.normal,
                           color: Colors.white70,
                         ),
                       ),
@@ -162,6 +221,7 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Tanggal + Jam
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(10),
@@ -267,7 +327,7 @@ class _HomePageState extends State<HomePage> {
 
                         const SizedBox(height: 20),
 
-                        // LOKASI ABSEN
+                        // ✅ Lokasi Absen dinamis
                         const Text(
                           "Lokasi Absen",
                           style: TextStyle(
@@ -278,26 +338,36 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 16),
                         Container(
-                          height: 70,
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: Colors.grey[900],
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: const Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              "jalan merdeka no 1",
-                              style: TextStyle(color: Colors.white),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _currentAddress,
+                                style: const TextStyle(color: Colors.white),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                "Jarak ke PPKD: ${_distanceToPpkd.toStringAsFixed(1)} m",
+                                style: TextStyle(
+                                  color: _distanceToPpkd <= _allowedRadius
+                                      ? Colors.greenAccent
+                                      : Colors.redAccent,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
 
                         const SizedBox(height: 20),
 
-                        // RIWAYAT ABSEN
+                        // Riwayat Absen
                         Row(
                           children: [
                             const Text(
@@ -314,7 +384,7 @@ class _HomePageState extends State<HomePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const History(),
+                                    builder: (_) => const History(),
                                   ),
                                 );
                               },
@@ -331,7 +401,6 @@ class _HomePageState extends State<HomePage> {
 
                         const SizedBox(height: 16),
 
-                        // CARD RIWAYAT
                         if (latestAttendance != null)
                           Container(
                             height: 90,
@@ -342,7 +411,6 @@ class _HomePageState extends State<HomePage> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 Container(
                                   padding: const EdgeInsets.all(12),
@@ -379,7 +447,6 @@ class _HomePageState extends State<HomePage> {
                                           color: Colors.white70,
                                           fontSize: 14,
                                         ),
-                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ],
                                   ),

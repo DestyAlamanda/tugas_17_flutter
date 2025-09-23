@@ -302,4 +302,26 @@ class AuthService {
     await PreferenceHandler.removeToken();
     await PreferenceHandler.saveLogin(false);
   }
+
+  static Future<RegisterResponse> updateUser({required String name}) async {
+    final token = await PreferenceHandler.getToken();
+    if (token == null) throw 'Token tidak ditemukan. Silakan login kembali.';
+
+    final response = await http.put(
+      Uri.parse(Endpoint.updateProfile),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'name': name}),
+    );
+
+    final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      return RegisterResponse.fromJson(data);
+    } else {
+      throw data['message'] ?? 'Gagal update profil';
+    }
+  }
 }

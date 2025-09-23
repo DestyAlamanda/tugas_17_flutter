@@ -35,14 +35,14 @@ class _HistoryState extends State<History> {
 
   Future<void> _loadHistory() async {
     try {
-      final resultStats = await _attendanceService.getAttendanceStats();
-
       List<AttendanceRecord> resultRecords;
+
       if (_selectedDateRange != null) {
         final start = DateFormat(
           'yyyy-MM-dd',
         ).format(_selectedDateRange!.start);
         final end = DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end);
+
         resultRecords = await _attendanceService.getAttendanceHistory(
           startDate: start,
           endDate: end,
@@ -51,16 +51,23 @@ class _HistoryState extends State<History> {
         resultRecords = await _attendanceService.getAttendanceHistory();
       }
 
+      // Hitung statistik dari records
+      final hadir = resultRecords.where((r) => r.status == "masuk").length;
+      final izin = resultRecords.where((r) => r.status == "izin").length;
+      final total = resultRecords.length;
+
       setState(() {
-        stats = resultStats;
+        stats = AttendanceStats(
+          totalAbsen: total,
+          totalMasuk: hadir,
+          totalIzin: izin,
+        );
         records = resultRecords;
         isLoading = false;
       });
     } catch (e) {
       print("❌ Gagal load history: $e");
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
