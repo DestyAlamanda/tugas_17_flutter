@@ -324,4 +324,74 @@ class AuthService {
       throw data['message'] ?? 'Gagal update profil';
     }
   }
+
+  Future<Map<String, dynamic>> updateUserProfile({
+    required String name,
+    required String email,
+  }) async {
+    final token = await PreferenceHandler.getToken(); // ✅ Fix disini
+    if (token == null) throw 'Token tidak ditemukan.';
+
+    final url = Uri.parse(Endpoint.profile);
+    try {
+      final response = await http.put(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({'name': name, 'email': email}),
+      );
+
+      final responseData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        return responseData;
+      } else if (response.statusCode == 422 && responseData['errors'] != null) {
+        final errors = responseData['errors'] as Map<String, dynamic>;
+        throw errors.values.first[0]; // ✅ ambil error pertama
+      } else {
+        throw responseData['message'] ?? 'Gagal memperbarui profil.';
+      }
+    } on SocketException {
+      throw 'Tidak dapat terhubung ke server.';
+    } catch (e) {
+      throw e.toString();
+    }
+  }
+
+  Future<Map<String, dynamic>> updateProfilePhoto({required File photo}) async {
+    final token = await PreferenceHandler.getToken(); // ✅ Fix disini
+    if (token == null) throw 'Token tidak ditemukan.';
+
+    final url = Uri.parse(Endpoint.updateProfilePhoto);
+    try {
+      List<int> imageBytes = await photo.readAsBytes();
+      String base64Image = base64Encode(imageBytes);
+
+      final response = await http.put(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'profile_photo': 'data:image/jpeg;base64,$base64Image',
+        }),
+      );
+
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        return responseData;
+      } else {
+        throw responseData['message'] ?? 'Gagal memperbarui foto profil.';
+      }
+    } on SocketException {
+      throw 'Tidak dapat terhubung ke server.';
+    } catch (e) {
+      throw e.toString();
+    }
+  }
 }

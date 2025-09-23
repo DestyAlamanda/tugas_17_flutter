@@ -10,6 +10,7 @@ class Endpoint {
   // Endpoint profile
   static const String profile = "$baseURL/profile";
   static const String updateProfile = "$baseURL/profile";
+  static final String updateProfilePhoto = '$baseURL/profile/photo';
   // Endpoint Data Master
   static final String trainings = '$baseURL/trainings';
   static final String batches = '$baseURL/batches';

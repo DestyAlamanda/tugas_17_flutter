@@ -5,6 +5,7 @@ import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/utils/shared_preference.dart';
 import 'package:tugas_17_flutter/view/auth/forgot_password.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
+import 'package:tugas_17_flutter/view/edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -223,10 +224,24 @@ class _ProfilePageState extends State<ProfilePage> {
                         _menuItem(
                           Icons.edit,
                           "Edit Profile",
-                          onTap: () {
-                            print("➡️ Edit profile diklik");
+                          onTap: () async {
+                            if (userData != null) {
+                              final result = await context.push(
+                                EditProfileScreen(
+                                  currentUser: userData!, // gunakan userData
+                                ),
+                              );
+
+                              if (result == true) {
+                                // reload data user setelah update profile
+                                setState(() {
+                                  _loadUserData();
+                                });
+                              }
+                            }
                           },
                         ),
+
                         _menuItem(
                           Icons.refresh,
                           "Reset",

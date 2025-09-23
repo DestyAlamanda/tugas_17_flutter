@@ -29,10 +29,9 @@ class _HomePageState extends State<HomePage> {
   DateTime _lastDate = DateTime.now();
   final AuthService _authService = AuthService();
 
-  // ✅ lokasi user sekarang
   String _currentAddress = "Memuat lokasi...";
   double _distanceToPpkd = 0.0;
-  final double _allowedRadius = 20; // meter
+  final double _allowedRadius = 20;
   final double _ppkdLat = -6.200000;
   final double _ppkdLng = 106.816666;
 
@@ -57,7 +56,7 @@ class _HomePageState extends State<HomePage> {
     initializeDateFormatting('id_ID', null).then((_) {
       _loadUserData();
       _loadRecentAttendances();
-      _getCurrentLocation(); // ✅ ambil lokasi saat ini
+      _getCurrentLocation();
     });
   }
 
@@ -143,7 +142,7 @@ class _HomePageState extends State<HomePage> {
     );
     if (result != null) {
       await _loadRecentAttendances();
-      await _getCurrentLocation(); // refresh lokasi
+      await _getCurrentLocation();
     }
   }
 
@@ -160,7 +159,7 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 children: [
                   CircleAvatar(
-                    radius: 26,
+                    radius: 28,
                     backgroundColor: Colors.orange,
                     backgroundImage: userData?.profilePhotoUrl != null
                         ? NetworkImage(userData!.profilePhotoUrl!)
@@ -178,7 +177,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Halo, ${userData?.name ?? '...'}",
+                        "Hai, ${userData?.name ?? '...'}",
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -186,7 +185,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                       ),
                       Text(
-                        "Batch: ${userData?.batchKe ?? '...'} | Training: ${userData?.trainingTitle ?? '...'}",
+                        "Batch ${userData?.batchKe ?? '...'} |  ${userData?.trainingTitle ?? '...'}",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white70,
@@ -214,7 +213,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 35,
+                    vertical: 40,
                     horizontal: 16,
                   ),
                   child: SingleChildScrollView(
@@ -224,10 +223,13 @@ class _HomePageState extends State<HomePage> {
                         // Tanggal + Jam
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 18,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(30),
                           ),
                           child: Column(
                             children: [
@@ -238,7 +240,7 @@ class _HomePageState extends State<HomePage> {
                                 ).format(DateTime.now()),
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: 19,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -246,7 +248,7 @@ class _HomePageState extends State<HomePage> {
                                 _currentTime,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 20,
+                                  fontSize: 38,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -263,17 +265,27 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Column(
                                       children: [
-                                        Text(
-                                          latestAttendance?.checkInTime ?? "-",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 30,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              latestAttendance?.checkInTime ??
+                                                  "-",
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 30,
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons.login_outlined,
+                                              size: 30,
+                                              color: Colors.green,
+                                            ),
+                                          ],
                                         ),
                                         const Text(
                                           "Check In",
@@ -297,7 +309,7 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(8),
+                                      borderRadius: BorderRadius.circular(20),
                                     ),
                                     child: Column(
                                       children: [
