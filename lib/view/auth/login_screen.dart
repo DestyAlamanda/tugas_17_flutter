@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/bottomNavBar.dart';
+import 'package:tugas_17_flutter/extensions/navigator.dart';
+import 'package:tugas_17_flutter/view/auth/forgot_password.dart';
 import 'package:tugas_17_flutter/view/auth/register_screen.dart';
-import 'package:tugas_17_flutter/view/auth/reset_passsword_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -202,20 +203,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              ResetPasswordScreen(email: _emailController.text),
-                        ),
+                      context.push(
+                        ForgotPasswordScreen(email: _emailController.text),
                       );
                     },
                     child: const Text(
-                      "Forget password?",
-                      style: TextStyle(color: Color(0xFF22C1C3)),
+                      "Forgot Password?",
+                      style: TextStyle(color: Colors.white70),
                     ),
                   ),
                 ),
+
                 const SizedBox(height: 24),
 
                 // Tombol Submit

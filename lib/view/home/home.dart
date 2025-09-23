@@ -5,10 +5,10 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
-import 'package:tugas_17_flutter/google_map.dart';
 import 'package:tugas_17_flutter/history.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
+import 'package:tugas_17_flutter/view/absen/google_map.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -101,15 +101,17 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   CircleAvatar(
                     radius: 26,
-                    child: SizedBox(
-                      width: 36,
-                      height: 36,
-                      child: const Icon(
-                        Icons.person_rounded,
-                        size: 20,
-                        color: Colors.white,
-                      ),
-                    ),
+                    backgroundColor: Colors.orange,
+                    backgroundImage: userData?.profilePhotoUrl != null
+                        ? NetworkImage(userData!.profilePhotoUrl!)
+                        : null,
+                    child: userData?.profilePhotoUrl == null
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 30,
+                            color: Colors.white,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Column(
@@ -170,7 +172,10 @@ class _HomePageState extends State<HomePage> {
                           child: Column(
                             children: [
                               Text(
-                                latestAttendance?.date ?? "-",
+                                DateFormat(
+                                  "EEEE, dd MMM yyyy",
+                                  "id_ID",
+                                ).format(DateTime.now()),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,

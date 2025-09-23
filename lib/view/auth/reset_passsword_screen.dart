@@ -119,7 +119,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        backgroundColor: Colors.white, // warna background aja
+        backgroundColor: Colors.white,
         body: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -273,8 +273,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               return 'Password tidak boleh kosong';
             }
             if (value.length < 8) return 'Minimal 8 karakter';
-            if (!RegExp(r'[A-Z]').hasMatch(value))
+            if (!RegExp(r'[A-Z]').hasMatch(value)) {
               return 'Harus ada huruf besar';
+            }
             if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(value)) {
               return 'Harus ada simbol';
             }

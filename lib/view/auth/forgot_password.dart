@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
+import 'package:tugas_17_flutter/extensions/navigator.dart';
 import 'package:tugas_17_flutter/view/auth/reset_passsword_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
-  const ForgotPasswordScreen({super.key});
+  final String? email; // biar bisa nerima dari LoginScreen
+
+  const ForgotPasswordScreen({super.key, this.email});
 
   @override
   State<ForgotPasswordScreen> createState() => _ForgotPasswordScreenState();
@@ -12,9 +15,16 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
+  late TextEditingController _emailController;
   final AuthService _authService = AuthService();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // kalau email dikirim dari LoginScreen, langsung isi
+    _emailController = TextEditingController(text: widget.email ?? "");
+  }
 
   Future<void> _handleSendOtp() async {
     if (!_formKey.currentState!.validate()) return;
@@ -23,20 +33,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     try {
       final response = await _authService.forgotPassword(
-        email: _emailController.text,
+        email: _emailController.text.trim(),
       );
+
       if (mounted) {
         final message = response['message'] ?? 'OTP berhasil dikirim!';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(message), backgroundColor: Colors.green),
         );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => ResetPasswordScreen(
-              email: _emailController.text,
-              popOnSuccess: false,
-            ),
+        context.push(
+          // kalau pakai extension navigator
+          ResetPasswordScreen(
+            email: _emailController.text.trim(),
+            popOnSuccess: false,
           ),
         );
       }
@@ -47,9 +56,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
+import 'package:tugas_17_flutter/extensions/navigator.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/utils/shared_preference.dart';
+import 'package:tugas_17_flutter/view/auth/forgot_password.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -150,12 +152,18 @@ class _ProfilePageState extends State<ProfilePage> {
                   CircleAvatar(
                     radius: 40,
                     backgroundColor: Colors.orange,
-                    child: const Icon(
-                      Icons.person_rounded,
-                      size: 30,
-                      color: Colors.white,
-                    ),
+                    backgroundImage: userData?.profilePhotoUrl != null
+                        ? NetworkImage(userData!.profilePhotoUrl!)
+                        : null,
+                    child: userData?.profilePhotoUrl == null
+                        ? const Icon(
+                            Icons.person_rounded,
+                            size: 30,
+                            color: Colors.white,
+                          )
+                        : null,
                   ),
+
                   const SizedBox(height: 14),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -223,7 +231,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           Icons.refresh,
                           "Reset",
                           onTap: () {
-                            print("➡️ Reset diklik");
+                            context.push(const ForgotPasswordScreen());
                           },
                         ),
                         _menuItem(

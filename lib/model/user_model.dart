@@ -6,8 +6,8 @@ class User {
   final String name;
   final String email;
   final String? jenisKelamin;
-  final String? batchKe; 
-  final String? trainingTitle; 
+  final String? batchKe;
+  final String? trainingTitle;
   final String? profilePhotoUrl;
   final Batch? batch;
   final Training? training;

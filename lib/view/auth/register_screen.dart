@@ -2,9 +2,13 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lottie/lottie.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
-import 'package:tugas_17_flutter/model/batch.dart';
-import 'package:tugas_17_flutter/model/training.dart';
+import 'package:tugas_17_flutter/extensions/navigator.dart';
+import 'package:tugas_17_flutter/model/batch2.dart';
+import 'package:tugas_17_flutter/model/register_model.dart';
+import 'package:tugas_17_flutter/model/training2.dart';
+import 'package:tugas_17_flutter/view/auth/login_screen.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,431 +18,386 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  bool hidePassword = true;
+  bool isLoading = false;
+  String? errorMessage;
+  RegisterUserModel? user;
 
-  List<Batch> _batches = [];
-  List<Training> _trainings = [];
-  Batch? _selectedBatch;
-  Training? _selectedTraining;
+  String? selectedGender;
+  batches? selectedBatch;
+  Datum? selectedTraining;
 
-  String? _selectedGender;
-  bool _isPasswordVisible = false;
-  bool _isLoading = false;
-  bool _isDataLoading = true;
-
-  final AuthService _authService = AuthService();
-
-  /// 🔑 Tambahan untuk foto
-  File? _profileImage;
   final ImagePicker _picker = ImagePicker();
+  XFile? pickedFile;
+
+  final TextEditingController nameController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passController = TextEditingController();
+
+  Map<String, String> genderMap = {"Laki-laki": "L", "Perempuan": "P"};
+
+  List<batches> batchList = [];
+  List<Datum> trainingList = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchDropdownData();
+    fetchDropdownData();
   }
 
-  Future<void> _fetchDropdownData() async {
+  Future<void> fetchDropdownData() async {
     try {
-      final batches = await _authService.getBatches();
-      final trainings = await _authService.getTrainings();
-      if (mounted) {
-        setState(() {
-          _batches = batches;
-          _trainings = trainings;
-          _isDataLoading = false;
-        });
-      }
+      final batchResponse = await AuthService.getAllBatches();
+      final trainingResponse = await AuthService.getAllTrainings();
+      setState(() {
+        batchList = batchResponse.data ?? [];
+        trainingList = trainingResponse.data ?? [];
+      });
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat data: ${e.toString()}')),
-        );
-        setState(() => _isDataLoading = false);
-      }
-    }
-  }
-
-  /// 🔑 Fungsi pilih gambar
-  Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-    if (pickedFile != null) {
-      setState(() => _profileImage = File(pickedFile.path));
-    }
-  }
-
-  Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
-    if (_selectedGender == null ||
-        _selectedBatch == null ||
-        _selectedTraining == null) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Lengkapi semua data!')));
+      ).showSnackBar(SnackBar(content: Text("Gagal load data dropdown: $e")));
+    }
+  }
+
+  Future<void> pickFoto() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    setState(() {
+      pickedFile = image;
+    });
+  }
+
+  Future<void> registerUser() async {
+    final name = nameController.text.trim();
+    final email = emailController.text.trim();
+    final pass = passController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Semua field wajib diisi")));
       return;
     }
 
-    setState(() => _isLoading = true);
+    if (selectedGender == null ||
+        selectedBatch == null ||
+        selectedTraining == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Pilih gender, batch, dan training")),
+      );
+      return;
+    }
+    if (pickedFile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Foto profil belum dipilih")),
+      );
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
 
     try {
-      final response = await _authService.registerUser(
-        name: _nameController.text,
-        email: _emailController.text,
-        password: _passwordController.text,
-        jenisKelamin: _selectedGender!,
-        batchId: _selectedBatch!.id.toString(),
-        trainingId: _selectedTraining!.id.toString(),
-        profilePhoto: _profileImage, // 🔑 kirim foto
+      RegisterUserModel result = await AuthService.registerUserAuth(
+        name: name,
+        email: email,
+        password: pass,
+        jenisKelamin: selectedGender!,
+        profilePhoto: File(pickedFile!.path),
+        batchId: selectedBatch!.id!,
+        trainingId: selectedTraining!.id!,
       );
 
-      if (mounted) {
-        final message = response['message'] ?? 'Registrasi berhasil';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.green),
-        );
+      // PreferenceHandler.saveToken(result.data?.token ?? "");
+      setState(() {
+        user = result;
+      });
 
-        Navigator.of(context).pop(); // kembali ke login
-      }
+      // ✅ Dialog sukses dengan Lottie
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.black,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                "assets/lottie/berhasil.json",
+                width: 150,
+                height: 150,
+                repeat: false,
+                onLoaded: (composition) {
+                  Future.delayed(composition.duration, () {
+                    Navigator.of(context).pop();
+                    context.push(const LoginScreen());
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              Text(
+                result.message ?? "Register Berhasil!",
+                style: const TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-        );
-      }
+      setState(() => errorMessage = e.toString());
+
+      // ❌ Dialog gagal
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.black,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                "assets/lottie/berhasil.json",
+                width: 150,
+                height: 150,
+                repeat: false,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Gagal daftar: $errorMessage",
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E), // dark bg
-      body: _isDataLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 30),
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 24),
 
-                    // const Icon(Icons.inbox, color: Colors.white, size: 48),
-                    // const SizedBox(height: 12),
-                    // const Text(
-                    //   "Registration",
-                    //   style: TextStyle(
-                    //     fontSize: 22,
-                    //     fontWeight: FontWeight.bold,
-                    //     color: Colors.white,
-                    //   ),
-                    // ),
-                    // const SizedBox(height: 8),
-                    // const Text(
-                    //   "Create your personal account now to access all",
-                    //   textAlign: TextAlign.center,
-                    //   style: TextStyle(color: Colors.white70, fontSize: 14),
-                    // ),
-                    // const SizedBox(height: 20),
-
-                    /// 🔑 Tambahan UI foto profil
-                    Column(
-                      children: [
-                        GestureDetector(
-                          onTap:
-                              _pickImage, // klik lingkaran langsung pilih foto
-                          child: CircleAvatar(
-                            radius: 52,
-                            backgroundColor: Colors.white24,
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundImage: _profileImage != null
-                                  ? FileImage(_profileImage!)
-                                  : null,
-                              backgroundColor: Colors.white,
-                              child: _profileImage == null
-                                  ? const Icon(
-                                      Icons.person_add_alt_1_outlined,
-                                      size: 40,
-                                      color: Colors.grey,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Name
-                    _buildLabel("NAME"),
-                    const SizedBox(height: 4),
-                    _buildTextField(
-                      controller: _nameController,
-                      hint: "Name",
-                      validator: (v) =>
-                          v == null || v.isEmpty ? "Nama wajib diisi" : null,
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Email
-                    _buildLabel("EMAIL"),
-                    const SizedBox(height: 4),
-                    _buildTextField(
-                      controller: _emailController,
-                      hint: "Email",
-                      validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return "Email wajib diisi";
-                        }
-                        if (!RegExp(
-                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                        ).hasMatch(v)) {
-                          return "Format email tidak valid";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Password
-                    _buildLabel("PASSWORD"),
-                    const SizedBox(height: 4),
-                    _buildTextField(
-                      controller: _passwordController,
-                      hint: "Password",
-                      obscure: !_isPasswordVisible,
-                      suffix: IconButton(
-                        icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: Colors.white54,
-                        ),
-                        onPressed: () => setState(
-                          () => _isPasswordVisible = !_isPasswordVisible,
-                        ),
-                      ),
-                      validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return "Password wajib diisi";
-                        }
-                        if (v.length < 6) {
-                          return "Password minimal 6 karakter";
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Dropdown Training
-                    _buildLabel("PELATIHAN"),
-                    const SizedBox(height: 4),
-                    _buildDropdown<Training>(
-                      hint: "Pilih Pelatihan",
-                      value: _selectedTraining,
-                      items: _trainings
-                          .map(
-                            (t) => DropdownMenuItem(
-                              value: t,
-                              child: Text(
-                                t.title,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) =>
-                          setState(() => _selectedTraining = val),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Dropdown Batch
-                    _buildLabel("BATCH"),
-                    const SizedBox(height: 4),
-                    _buildDropdown<Batch>(
-                      hint: "Pilih Batch",
-                      value: _selectedBatch,
-                      items: _batches
-                          .map(
-                            (b) => DropdownMenuItem(
-                              value: b,
-                              child: Text(
-                                b.batchKe,
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (val) => setState(() => _selectedBatch = val),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Gender
-                    _buildLabel("JENIS KELAMIN"),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: RadioListTile<String>(
-                            activeColor: const Color(0xFF22C1C3),
-                            title: const Text(
-                              "Laki-laki",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                            value: "L",
-                            groupValue: _selectedGender,
-                            onChanged: (v) =>
-                                setState(() => _selectedGender = v),
-                          ),
-                        ),
-                        Expanded(
-                          child: RadioListTile<String>(
-                            activeColor: const Color(0xFF22C1C3),
-                            title: const Text(
-                              "Perempuan",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                              ),
-                            ),
-                            value: "P",
-                            groupValue: _selectedGender,
-                            onChanged: (v) =>
-                                setState(() => _selectedGender = v),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleRegister,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF22C1C3),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                            : const Text(
-                                "Next",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Back to login
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Text.rich(
-                        TextSpan(
-                          text: "back to ",
-                          style: TextStyle(color: Colors.white70, fontSize: 14),
-                          children: [
-                            TextSpan(
-                              text: "Login",
-                              style: TextStyle(
-                                color: Color(0xFF22C1C3),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+              // Foto profil
+              GestureDetector(
+                onTap: pickFoto,
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundColor: Colors.grey[800],
+                  backgroundImage: pickedFile != null
+                      ? FileImage(File(pickedFile!.path))
+                      : null,
+                  child: pickedFile == null
+                      ? const Icon(
+                          Icons.person_add,
+                          size: 40,
+                          color: Colors.white,
+                        )
+                      : null,
                 ),
               ),
-            ),
+              const SizedBox(height: 32),
+
+              // Name
+              _labelText("NAME"),
+              _inputField(controller: nameController, hint: "Name"),
+              const SizedBox(height: 16),
+
+              // Email
+              _labelText("EMAIL"),
+              _inputField(controller: emailController, hint: "Email"),
+              const SizedBox(height: 16),
+
+              // Password
+              _labelText("PASSWORD"),
+              _inputField(
+                controller: passController,
+                hint: "Password",
+                obscure: hidePassword,
+                suffix: IconButton(
+                  icon: Icon(
+                    hidePassword ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () => setState(() => hidePassword = !hidePassword),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Pelatihan
+              _labelText("PELATIHAN"),
+              DropdownButtonFormField<Datum>(
+                dropdownColor: Colors.black,
+                initialValue: selectedTraining,
+                items: trainingList
+                    .map(
+                      (t) => DropdownMenuItem(
+                        value: t,
+                        child: Text(
+                          t.title ?? "Pelatihan ${t.id}",
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => selectedTraining = val),
+                decoration: _underlineInputDecoration(""),
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+
+              // Batch
+              _labelText("BATCH"),
+              DropdownButtonFormField<batches>(
+                dropdownColor: Colors.black,
+                initialValue: selectedBatch,
+                items: batchList
+                    .map(
+                      (b) => DropdownMenuItem(
+                        value: b,
+                        child: Text(
+                          b.batchKe ?? "Batch ${b.id}",
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => selectedBatch = val),
+                decoration: _underlineInputDecoration(""),
+                style: const TextStyle(color: Colors.white),
+              ),
+              const SizedBox(height: 16),
+
+              // Gender
+              _labelText("JENIS KELAMIN"),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Radio<String>(
+                    value: "L",
+                    groupValue: selectedGender,
+                    onChanged: (val) => setState(() => selectedGender = val),
+                    activeColor: Colors.teal,
+                  ),
+                  const Text(
+                    "Laki-laki",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(width: 16),
+                  Radio<String>(
+                    value: "P",
+                    groupValue: selectedGender,
+                    onChanged: (val) => setState(() => selectedGender = val),
+                    activeColor: Colors.teal,
+                  ),
+                  const Text(
+                    "Perempuan",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // Tombol Next
+              ElevatedButton(
+                onPressed: isLoading ? null : registerUser,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: isLoading
+                    ? const CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      )
+                    : const Text(
+                        "Next",
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+              ),
+              const SizedBox(height: 16),
+
+              // Back to login
+              GestureDetector(
+                onTap: () => context.push(const LoginScreen()),
+                child: const Text(
+                  "back to Login",
+                  style: TextStyle(
+                    color: Colors.teal,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildLabel(String text) {
+  // Label kecil di atas field
+  Widget _labelText(String text) {
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
         text,
         style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
           fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey,
         ),
       ),
     );
   }
 
-  Widget _buildTextField({
+  // Input field underline
+  Widget _inputField({
     required TextEditingController controller,
     required String hint,
-    String? Function(String?)? validator,
     bool obscure = false,
     Widget? suffix,
   }) {
-    return TextFormField(
+    return TextField(
       controller: controller,
-      style: const TextStyle(color: Colors.white),
       obscureText: obscure,
+      style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54),
+        hintStyle: const TextStyle(color: Colors.grey),
         enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white24),
+          borderSide: BorderSide(color: Colors.grey),
         ),
         focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF22C1C3)),
+          borderSide: BorderSide(color: Colors.teal),
         ),
         suffixIcon: suffix,
       ),
-      validator: validator,
     );
   }
 
-  Widget _buildDropdown<T>({
-    required String hint,
-    required List<DropdownMenuItem<T>> items,
-    required T? value,
-    required void Function(T?) onChanged,
-  }) {
-    return DropdownButtonFormField<T>(
-      dropdownColor: const Color(0xFF1A1A1A),
-      initialValue: value,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54),
-        enabledBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Colors.white24),
-        ),
-        focusedBorder: const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF22C1C3)),
-        ),
+  InputDecoration _underlineInputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.grey),
+      enabledBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.grey),
       ),
-      items: items,
-      onChanged: onChanged,
-      validator: (v) => v == null ? "Wajib dipilih" : null,
-      style: const TextStyle(color: Colors.white),
+      focusedBorder: const UnderlineInputBorder(
+        borderSide: BorderSide(color: Colors.teal),
+      ),
     );
   }
 }
