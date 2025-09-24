@@ -34,7 +34,7 @@ class _HomePageState extends State<HomePage> {
   double _distanceToPpkd = 0.0;
   final double _ppkdLat = -6.210881;
   final double _ppkdLng = 106.812942;
-  final double _allowedRadius = 20;
+  final double _allowedRadius = 1000;
 
   @override
   void initState() {
@@ -353,7 +353,9 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    "Jarak ke PPKD: ${(_distanceToPpkd / 1000).toStringAsFixed(2)} km",
+                                    _distanceToPpkd >= 1000
+                                        ? "Jarak ke PPKD: ${(_distanceToPpkd / 1000).toStringAsFixed(2)} km"
+                                        : "Jarak ke PPKD: ${_distanceToPpkd.toStringAsFixed(0)} m",
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,

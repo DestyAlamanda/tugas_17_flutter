@@ -29,7 +29,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
 
   // LokasiPPKD + radius (meter)
   final gmaps.LatLng _ppkdLocation = const gmaps.LatLng(-6.210881, 106.812942);
-  final double _allowedRadius = 20;
+  final double _allowedRadius = 1000;
 
   @override
   void initState() {
@@ -287,7 +287,17 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const BottomNavigator()),
+            );
+          },
+        ),
       ),
+
       body: Stack(
         children: [
           gmaps.GoogleMap(
