@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:lottie/lottie.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/utils/app_color.dart';
@@ -30,7 +31,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-
     _nameController = TextEditingController(text: widget.currentUser.name);
     _emailController = TextEditingController(text: widget.currentUser.email);
   }
@@ -68,31 +68,67 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(successMessage ?? 'Profil berhasil diperbarui'),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
+        // ✅ Tampilkan dialog berhasil
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.black,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Lottie.asset(
+                  "assets/lottie/berhasil.json",
+                  width: 150,
+                  height: 150,
+                  repeat: false,
+                  onLoaded: (composition) {
+                    Future.delayed(composition.duration, () {
+                      if (mounted) {
+                        Navigator.of(context).pop(); // tutup dialog
+                        Navigator.of(context).pop(true); // balik ke ProfilePage
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  successMessage ?? "Profil berhasil diperbarui!",
+                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                ),
+              ],
+            ),
           ),
         );
-        Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString()),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(16),
+        // ❌ Tampilkan dialog gagal
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            backgroundColor: Colors.black,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Lottie.asset(
+                  "assets/lottie/gagal.json",
+                  width: 150,
+                  height: 150,
+                  repeat: false,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  "Gagal memperbarui: $e",
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
           ),
         );
       }
     } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -109,7 +145,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           elevation: 0,
           centerTitle: true,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.amber),
+            icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.teal),
             onPressed: () {
               FocusScope.of(context).unfocus();
               Navigator.of(context).pop();
@@ -179,8 +215,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(height: 8),
           TextButton.icon(
             onPressed: _pickImage,
-            icon: const Icon(Icons.camera_alt_outlined, size: 20),
-            label: const Text('Ubah Foto Profil'),
+            icon: const Icon(
+              Icons.camera_alt_outlined,
+              size: 20,
+              color: AppColors.teal,
+            ),
+            label: const Text(
+              'Ubah Foto Profil',
+              style: TextStyle(color: AppColors.teal),
+            ),
           ),
         ],
       ),

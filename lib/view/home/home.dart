@@ -32,9 +32,9 @@ class _HomePageState extends State<HomePage> {
 
   String _currentAddress = "Memuat lokasi...";
   double _distanceToPpkd = 0.0;
+  final double _ppkdLat = -6.210881;
+  final double _ppkdLng = 106.812942;
   final double _allowedRadius = 20;
-  final double _ppkdLat = -6.200000;
-  final double _ppkdLng = 106.816666;
 
   @override
   void initState() {
@@ -381,7 +381,7 @@ class _HomePageState extends State<HomePage> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: _distanceToPpkd <= _allowedRadius
-                                        ? Color(0xFF58C5C8)
+                                        ? const Color(0xFF58C5C8) // teal
                                         : Colors.redAccent,
                                   ),
                                 ),

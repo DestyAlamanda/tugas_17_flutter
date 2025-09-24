@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/bottomNavBar.dart';
 import 'package:tugas_17_flutter/extensions/navigator.dart';
@@ -33,24 +34,73 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text.trim(),
       );
 
-      if (mounted) {
-        FocusScope.of(context).unfocus();
-        final message = response['message'] ?? "Login berhasil";
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.green),
-        );
+      if (!mounted) return;
 
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const BottomNavigator()),
-          (Route<dynamic> route) => false,
-        );
-      }
+      final message = response['message'] ?? "Login berhasil";
+
+      // ✅ Dialog sukses
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.black,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                "assets/lottie/berhasil.json",
+                width: 150,
+                height: 150,
+                repeat: false,
+                onLoaded: (composition) {
+                  Future.delayed(composition.duration, () {
+                    Navigator.of(context).pop(); // tutup dialog
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (context) => const BottomNavigator(),
+                      ),
+                      (Route<dynamic> route) => false,
+                    );
+                  });
+                },
+              ),
+              const SizedBox(height: 10),
+              Text(
+                message,
+                style: const TextStyle(fontSize: 16, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
-        );
-      }
+      if (!mounted) return;
+
+      final errorMessage = e.toString();
+
+      // ❌ Dialog gagal
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: Colors.black,
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Lottie.asset(
+                "assets/lottie/gagal.json",
+                width: 150,
+                height: 150,
+                repeat: false,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Login gagal: $errorMessage",
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      );
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -66,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0E0E0E), // hitam gelap
+      backgroundColor: const Color(0xFF0E0E0E),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -76,9 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-
                 const SizedBox(height: 24),
-
                 const Text(
                   "Masuk",
                   style: TextStyle(
@@ -93,8 +141,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white70),
                 ),
-                const SizedBox(height: 40),
-
                 const SizedBox(height: 40),
 
                 // Email

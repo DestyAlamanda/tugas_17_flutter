@@ -2,9 +2,9 @@
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <application
-        android:label="tugas_17_flutter"
+        android:label="Tipe Time"
         android:name="${applicationName}"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/logo_taptime">
         <activity
             android:name=".MainActivity"
             android:exported="true"

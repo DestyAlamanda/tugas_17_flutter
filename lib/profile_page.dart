@@ -5,7 +5,6 @@ import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/utils/shared_preference.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
 import 'package:tugas_17_flutter/view/password/forgot_password.dart';
-import 'package:tugas_17_flutter/view/profile/edit_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -98,10 +97,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 Navigator.pop(context); // tutup dialog
                 handleLogout(context); // lanjut logout
               },
-              child: const Text(
-                "Ya, Keluar",
-                style: TextStyle(color: Colors.white70),
-              ),
+              child: const Text("Ya, Keluar"),
             ),
           ],
         );
@@ -125,7 +121,7 @@ class _ProfilePageState extends State<ProfilePage> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: const Color(0xFF122C29),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: Colors.white, size: 24),
@@ -173,7 +169,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        " ${userData?.name ?? '...'}",
+                        "Halo, ${userData?.name ?? '...'}",
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -182,14 +178,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        "Batch ${userData?.batchKe ?? '...'} ",
+                        "Batch: ${userData?.batchKe ?? '...'} ",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white70,
                         ),
                       ),
                       Text(
-                        " ${userData?.trainingTitle ?? '...'}",
+                        "Training: ${userData?.trainingTitle ?? '...'}",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white70,
@@ -227,24 +223,10 @@ class _ProfilePageState extends State<ProfilePage> {
                         _menuItem(
                           Icons.edit,
                           "Edit Profile",
-                          onTap: () async {
-                            if (userData != null) {
-                              final result = await context.push(
-                                EditProfileScreen(
-                                  currentUser: userData!, // gunakan userData
-                                ),
-                              );
-
-                              if (result == true) {
-                                // reload data user setelah update profile
-                                setState(() {
-                                  _loadUserData();
-                                });
-                              }
-                            }
+                          onTap: () {
+                            print("➡️ Edit profile diklik");
                           },
                         ),
-
                         _menuItem(
                           Icons.refresh,
                           "Reset",
@@ -252,13 +234,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             context.push(const ForgotPasswordScreen());
                           },
                         ),
-                        // _menuItem(
-                        //   Icons.info,
-                        //   "Tentang Aplikasi",
-                        //   onTap: () {
-                        //     print("➡️ Tentang aplikasi diklik");
-                        //   },
-                        // ),
+                        _menuItem(
+                          Icons.info,
+                          "Tentang Aplikasi",
+                          onTap: () {
+                            print("➡️ Tentang aplikasi diklik");
+                          },
+                        ),
                         _menuItem(
                           Icons.logout,
                           "Keluar",

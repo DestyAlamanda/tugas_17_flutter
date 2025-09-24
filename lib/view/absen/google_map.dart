@@ -27,8 +27,8 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
 
   bool _hasCheckedIn = false; // state untuk checkin/checkout
 
-  // ✅ Lokasi fix PPKD + radius (meter)
-  final gmaps.LatLng _ppkdLocation = const gmaps.LatLng(-6.200000, 106.816666);
+  // LokasiPPKD + radius (meter)
+  final gmaps.LatLng _ppkdLocation = const gmaps.LatLng(-6.210881, 106.812942);
   final double _allowedRadius = 20;
 
   @override
@@ -76,28 +76,68 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     }
   }
 
-  void _showCheckAnimationAndGoHome() {
+  // ✅ Animasi berhasil
+  void _showSuccessDialog(String message) {
+    if (!mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return Center(
-          child: Lottie.asset(
-            'assets/lottie/berhasil.json',
-            repeat: false,
-            onLoaded: (composition) {
-              Future.delayed(composition.duration, () {
-                if (!mounted) return;
-                Navigator.of(context).pop(); // tutup dialog animasi
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => const BottomNavigator()),
-                );
-              });
-            },
-          ),
-        );
-      },
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.black,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.asset(
+              "assets/lottie/berhasil.json",
+              width: 150,
+              height: 150,
+              repeat: false,
+              onLoaded: (composition) {
+                Future.delayed(composition.duration, () {
+                  if (mounted) {
+                    Navigator.of(context).pop(); // tutup dialog
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const BottomNavigator(),
+                      ),
+                    );
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 10),
+            Text(
+              message,
+              style: const TextStyle(fontSize: 16, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ❌ Animasi gagal
+  void _showErrorDialog(String message) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: Colors.black,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Lottie.asset(
+              "assets/lottie/gagal.json",
+              width: 150,
+              height: 150,
+              repeat: false,
+            ),
+            const SizedBox(height: 10),
+            Text(message, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -106,7 +146,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     try {
       await _getCurrentLocation();
 
-      // ✅ Cek jarak user ke lokasi PPKD
+      // Cek jarak user ke lokasi PPKD
       double distance = Geolocator.distanceBetween(
         _currentPosition.latitude,
         _currentPosition.longitude,
@@ -115,14 +155,8 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
       );
 
       if (distance > _allowedRadius) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Anda berada di luar radius $_allowedRadius m dari PPKD!",
-            ),
-            backgroundColor: Colors.red[600],
-          ),
+        _showErrorDialog(
+          "Anda berada di luar radius $_allowedRadius m dari PPKD!",
         );
         return;
       }
@@ -141,25 +175,10 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
 
       if (!mounted) return;
       setState(() => _hasCheckedIn = true);
-      debugPrint("✅ Berhasil check-in → ubah jadi $_hasCheckedIn");
 
-      _showCheckAnimationAndGoHome();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Check-in berhasil!"),
-          backgroundColor: Colors.green[600],
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      _showSuccessDialog("Check-in berhasil!");
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal check-in: $e"),
-          backgroundColor: Colors.red[600],
-        ),
-      );
+      _showErrorDialog("Gagal check-in: $e");
     }
   }
 
@@ -168,7 +187,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     try {
       await _getCurrentLocation();
 
-      // ✅ Cek jarak user ke lokasi PPKD
+      //  Cek jarak user ke lokasi PPKD
       double distance = Geolocator.distanceBetween(
         _currentPosition.latitude,
         _currentPosition.longitude,
@@ -177,14 +196,8 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
       );
 
       if (distance > _allowedRadius) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Anda berada di luar radius $_allowedRadius m dari PPKD!",
-            ),
-            backgroundColor: Colors.red[600],
-          ),
+        _showErrorDialog(
+          "Anda berada di luar radius $_allowedRadius m dari PPKD!",
         );
         return;
       }
@@ -204,39 +217,38 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
       if (!mounted) return;
       setState(() => _hasCheckedIn = false);
 
-      _showCheckAnimationAndGoHome();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text("Check-out berhasil!"),
-          backgroundColor: Colors.red[600],
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      _showSuccessDialog("Check-out berhasil!");
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal check-out: $e"),
-          backgroundColor: Colors.red[600],
-        ),
-      );
+      _showErrorDialog("Gagal check-out: $e");
     }
   }
 
-  Widget _buildCircleButton(String label) {
+  Widget _buildCircleButton(String label, bool isCheckOut) {
     return Container(
       width: 160,
       height: 160,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF2fb398), Color(0xFF4effca), Color(0xFF9effe2)],
+          colors: isCheckOut
+              ? [
+                  Colors.red.shade700,
+                  Colors.red.shade400,
+                  Colors.red.shade200,
+                ] // 🔴 Punch Out merah
+              : [
+                  const Color(0xFF2fb398),
+                  const Color(0xFF4effca),
+                  const Color(0xFF9effe2),
+                ], // 🟢 Punch In hijau
         ),
         boxShadow: [
-          const BoxShadow(color: Color(0xFF2fb398), blurRadius: 30),
+          BoxShadow(
+            color: isCheckOut ? Colors.red.shade700 : const Color(0xFF2fb398),
+            blurRadius: 30,
+          ),
           BoxShadow(
             color: const Color(0xFF6C5CE7).withOpacity(0.3),
             blurRadius: 50,
@@ -247,7 +259,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.touch_app_rounded, color: Colors.white, size: 48),
+            Icon(Icons.touch_app_rounded, color: Colors.white, size: 48),
             const SizedBox(height: 12),
             Text(
               label,
@@ -412,10 +424,35 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                                     },
                                     child: _buildCircleButton(
                                       _hasCheckedIn ? "Keluar" : "Masuk",
+                                      _hasCheckedIn,
                                     ),
                                   ),
                                 );
                               },
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          // 🔽 Badge status absen
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _hasCheckedIn
+                                  ? const Color(0xFF122C29) // hijau tua
+                                  : Colors.red.withOpacity(0.2), // coklat tua
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              _hasCheckedIn ? "Sudah Absen" : "Belum Absen",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: _hasCheckedIn
+                                    ? const Color(0xFF58C5C8)
+                                    : Colors.redAccent,
+                              ),
                             ),
                           ),
                         ],
