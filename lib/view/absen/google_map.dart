@@ -25,11 +25,13 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation = const AlwaysStoppedAnimation(3.0);
 
-  bool _hasCheckedIn = false; // state untuk checkin/checkout
+  bool _hasCheckedIn = false;
 
-  // LokasiPPKD + radius (meter)
+  // Lokasi PPKD Jakarta Pusat
   final gmaps.LatLng _ppkdLocation = const gmaps.LatLng(-6.210881, 106.812942);
-  final double _allowedRadius = 1000;
+
+  // ✅ simpan jarak (dalam km)
+  double? _distanceKm;
 
   @override
   void initState() {
@@ -95,7 +97,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
               onLoaded: (composition) {
                 Future.delayed(composition.duration, () {
                   if (mounted) {
-                    Navigator.of(context).pop(); // tutup dialog
+                    Navigator.of(context).pop();
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -146,21 +148,6 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
     try {
       await _getCurrentLocation();
 
-      // Cek jarak user ke lokasi PPKD
-      double distance = Geolocator.distanceBetween(
-        _currentPosition.latitude,
-        _currentPosition.longitude,
-        _ppkdLocation.latitude,
-        _ppkdLocation.longitude,
-      );
-
-      if (distance > _allowedRadius) {
-        _showErrorDialog(
-          "Anda berada di luar radius $_allowedRadius m dari PPKD!",
-        );
-        return;
-      }
-
       final now = DateTime.now();
       final date = DateFormat('yyyy-MM-dd').format(now);
       final time = DateFormat('HH:mm').format(now);
@@ -186,21 +173,6 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
   Future<void> _handleCheckOut() async {
     try {
       await _getCurrentLocation();
-
-      //  Cek jarak user ke lokasi PPKD
-      double distance = Geolocator.distanceBetween(
-        _currentPosition.latitude,
-        _currentPosition.longitude,
-        _ppkdLocation.latitude,
-        _ppkdLocation.longitude,
-      );
-
-      if (distance > _allowedRadius) {
-        _showErrorDialog(
-          "Anda berada di luar radius $_allowedRadius m dari PPKD!",
-        );
-        return;
-      }
 
       final now = DateTime.now();
       final date = DateFormat('yyyy-MM-dd').format(now);
@@ -233,16 +205,12 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: isCheckOut
-              ? [
-                  Colors.red.shade700,
-                  Colors.red.shade400,
-                  Colors.red.shade200,
-                ] // 🔴 Punch Out merah
+              ? [Colors.red.shade700, Colors.red.shade400, Colors.red.shade200]
               : [
                   const Color(0xFF2fb398),
                   const Color(0xFF4effca),
                   const Color(0xFF9effe2),
-                ], // 🟢 Punch In hijau
+                ],
         ),
         boxShadow: [
           BoxShadow(
@@ -297,7 +265,6 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
           },
         ),
       ),
-
       body: Stack(
         children: [
           gmaps.GoogleMap(
@@ -450,8 +417,8 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                             ),
                             decoration: BoxDecoration(
                               color: _hasCheckedIn
-                                  ? const Color(0xFF122C29) // hijau tua
-                                  : Colors.red.withOpacity(0.2), // coklat tua
+                                  ? const Color(0xFF122C29)
+                                  : Colors.red.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Text(
@@ -505,6 +472,15 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
       _currentPosition.longitude,
     );
     Placemark place = placemarks[0];
+
+    // ✅ hitung jarak ke PPKD dalam KM
+    double distanceMeters = Geolocator.distanceBetween(
+      _currentPosition.latitude,
+      _currentPosition.longitude,
+      _ppkdLocation.latitude,
+      _ppkdLocation.longitude,
+    );
+    _distanceKm = distanceMeters / 1000;
 
     if (!mounted) return;
     setState(() {

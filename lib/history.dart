@@ -145,12 +145,21 @@ class _HistoryState extends State<History> {
                               ),
                             ),
                             const SizedBox(width: 10),
-                            IconButton(
-                              onPressed: _pickDateRange,
-                              icon: const Icon(
-                                Icons.calendar_month_outlined,
-                                color: AppColors.primary,
-                                size: 26,
+
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: IconButton(
+                                onPressed: _pickDateRange,
+                                icon: const Icon(
+                                  Icons.calendar_month_outlined,
+                                  color: Color(
+                                    0xFF58C5C8,
+                                  ), // bisa diganti AppColors.primary
+                                  size: 24,
+                                ),
                               ),
                             ),
                           ],
@@ -264,6 +273,7 @@ class _HistoryState extends State<History> {
                     topRight: Radius.circular(30),
                   ),
                 ),
+
                 child: isLoading
                     ? const Center(
                         child: CircularProgressIndicator(

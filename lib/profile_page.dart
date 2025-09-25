@@ -178,7 +178,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 5),
                       Text(
-                        "Batch: ${userData?.batchKe ?? '...'} ",
+                        "Batch: ${userData?.email ?? '...'} ",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white70,
@@ -213,7 +213,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 35,
+                    vertical: 40,
                     horizontal: 16,
                   ),
                   child: SingleChildScrollView(

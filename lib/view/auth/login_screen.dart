@@ -126,16 +126,11 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
-                const SizedBox(height: 24),
-                const Text(
-                  "Masuk",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                Image.asset(
+                  "assets/images/logo2.png",
+                  height: 100, // atur tinggi sesuai kebutuhan
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
                 const Text(
                   "Selamat datang kembali! Masukkan email dan\nkata sandi untuk melanjutkan.",
                   textAlign: TextAlign.center,

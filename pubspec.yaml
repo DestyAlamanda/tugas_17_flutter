@@ -75,6 +75,7 @@ flutter:
     - assets/images/splash.png
     - assets/images/logo.png
     - assets/lottie/gagal.json
+    - assets/images/logo2.png
   #   - images/a_dot_ham.jpeg
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

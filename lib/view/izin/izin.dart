@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
+import 'package:tugas_17_flutter/view/widgets/custom_text_form_field.dart';
 
 class AppColors {
   static const primary = Color(0xFF58C5C8);
@@ -45,6 +46,22 @@ class _IzinPageState extends State<IzinPage>
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppColors.primary, // header & tombol OK
+              onPrimary: Colors.white, // teks di header
+              surface: Color(0xFF1E1E1E), // background dialog
+              onSurface: Colors.white, // teks tanggal
+            ),
+            dialogTheme: DialogThemeData(
+              backgroundColor: const Color(0xFF111216),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (pickedDate != null) {
       setState(() => _selectedDate = pickedDate);
@@ -161,26 +178,16 @@ class _IzinPageState extends State<IzinPage>
                               const SizedBox(height: 8),
                               GestureDetector(
                                 onTap: _pickDate,
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[800],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.calendar_today,
-                                        color: Colors.white54,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        tanggalIzin,
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
+                                child: AbsorbPointer(
+                                  child: CustomTextFormField(
+                                    controller: TextEditingController(
+                                      text: tanggalIzin,
+                                    ),
+                                    hintText: "Pilih tanggal izin",
+                                    prefixIcon: const Icon(
+                                      Icons.calendar_today,
+                                      color: Colors.white54,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -193,31 +200,22 @@ class _IzinPageState extends State<IzinPage>
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              TextFormField(
+                              CustomTextFormField(
                                 controller: _alasanController,
-                                style: const TextStyle(color: Colors.white),
-                                maxLines: 3,
-                                decoration: InputDecoration(
-                                  hintText: "Tuliskan alasan izin...",
-                                  hintStyle: const TextStyle(
-                                    color: Colors.white54,
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.grey[800],
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    borderSide: BorderSide.none,
-                                  ),
+                                hintText: "Tuliskan alasan izin...",
+                                keyboardType: TextInputType.multiline,
+                                prefixIcon: const Icon(
+                                  Icons.edit_note_rounded,
+                                  color: Colors.white54,
                                 ),
                               ),
                               const SizedBox(height: 30),
-                              SizedBox(
-                                width: double.infinity,
-                                child: CustomButton(
-                                  label: "Kirim Izin",
-                                  isLoading: _isLoading,
-                                  onPressed: _kirimIzin,
-                                ),
+                              CustomButton(
+                                onPressed: _isLoading ? null : _kirimIzin,
+                                label: _isLoading
+                                    ? "Mengirim..."
+                                    : "Kirim Izin",
+                                isLoading: _isLoading,
                               ),
                             ],
                           ),
@@ -251,7 +249,7 @@ class _IzinPageState extends State<IzinPage>
                                 .where((r) => r.status.toLowerCase() == 'izin')
                                 .toList();
 
-                            // 🔹 sort terbaru dulu
+                            // sort terbaru dulu
                             izinList.sort((a, b) {
                               final dateA = a.attendanceDate ?? DateTime(1900);
                               final dateB = b.attendanceDate ?? DateTime(1900);

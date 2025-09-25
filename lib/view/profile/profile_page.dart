@@ -180,16 +180,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: Colors.white,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 3),
                       Text(
-                        "Batch ${userData?.batchKe ?? '...'} ",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      Text(
-                        " ${userData?.trainingTitle ?? '...'}",
+                        "${userData?.email ?? '...'} ",
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white70,

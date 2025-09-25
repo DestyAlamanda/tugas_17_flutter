@@ -59,7 +59,11 @@ class _BottomNavigatorState extends State<BottomNavigator> {
             children: [
               // Kiri
               _buildTabItem(index: 0, icon: Icons.home, label: "Home"),
-              _buildTabItem(index: 1, icon: Icons.info, label: "Riwayat"),
+              _buildTabItem(
+                index: 1,
+                icon: Icons.history_rounded,
+                label: "Riwayat",
+              ),
 
               const SizedBox(width: 48), // ruang untuk FAB
               // Kanan
