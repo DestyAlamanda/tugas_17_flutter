@@ -11,7 +11,7 @@ class AppColors {
 
   static const teal = Color(0xFF58C5C8);
   static const tealLight = Color(0xFFCBEBE6);
-  static const tealLightCard = Color(0xFFCFEEEF);
+  static const tealLightCard = Color.fromARGB(255, 147, 206, 208);
   static const tealDark = Color(0xFF3A7072);
   static const tealCard = Color(0xFF469ea0);
 

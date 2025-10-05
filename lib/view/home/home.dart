@@ -9,6 +9,7 @@ import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
+import 'package:tugas_17_flutter/utils/app_color.dart';
 import 'package:tugas_17_flutter/view/absen/google_map.dart';
 import 'package:tugas_17_flutter/view/widgets/section_title.dart';
 
@@ -25,12 +26,11 @@ class _HomePageState extends State<HomePage> {
   List<AttendanceRecord> recentAttendances = [];
   final AttendanceService _attendanceService = AttendanceService();
   String _currentTime = DateFormat.Hms().format(DateTime.now());
-
   DateTime _lastDate = DateTime.now();
   final AuthService _authService = AuthService();
 
   String _currentAddress = "Memuat lokasi...";
-  double _distanceToPpkd = 0.0; // dalam KM
+  double _distanceToPpkd = 0.0;
   final double _ppkdLat = -6.210881;
   final double _ppkdLng = 106.812942;
 
@@ -85,7 +85,6 @@ class _HomePageState extends State<HomePage> {
         final oneWeekAgo = DateTime.now().subtract(const Duration(days: 6));
 
         setState(() {
-          // filter 7 hari terakhir
           recentAttendances = resultRecords.where((record) {
             try {
               if (record.attendanceDate != null) {
@@ -98,7 +97,6 @@ class _HomePageState extends State<HomePage> {
             }
           }).toList();
 
-          // ambil absensi hari ini
           latestAttendance = resultRecords.firstWhere(
             (r) =>
                 r.attendanceDate != null &&
@@ -172,13 +170,12 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ✅ Fungsi untuk label status
   String _getAttendanceLabel(String status) {
     switch (status.toLowerCase()) {
       case 'masuk':
         return "Masuk";
-      case 'pulang':
-        return "Pulang";
+      case 'keluar':
+        return "keluar";
       case 'izin':
         return "Izin";
       default:
@@ -186,90 +183,105 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _onRefresh() async {
+    await _loadUserData();
+    await _loadRecentAttendances();
+    await _getCurrentLocation();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      body: Column(
-        children: [
-          // HEADER
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.orange,
-                    backgroundImage: userData?.profilePhotoUrl != null
-                        ? NetworkImage(userData!.profilePhotoUrl!)
-                        : null,
-                    child: userData?.profilePhotoUrl == null
-                        ? const Icon(
-                            Icons.person_rounded,
-                            size: 30,
-                            color: Colors.white,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: Colors.white,
+        backgroundColor: Colors.grey[900],
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              // HEADER
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
                     children: [
-                      Text(
-                        "Hai, ${userData?.name ?? '...'}",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: userData?.profilePhotoUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(
+                                    userData!.profilePhotoUrl!,
+                                  ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
+                        child: userData?.profilePhotoUrl == null
+                            ? const Icon(
+                                Icons.person_rounded,
+                                size: 32,
+                                color: Colors.white,
+                              )
+                            : null,
                       ),
-                      Text(
-                        "Batch ${userData?.batchKe ?? '...'} |  ${userData?.trainingTitle ?? '...'}",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.white70,
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Hai, ${userData?.name ?? '...'}",
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Batch ${userData?.batchKe ?? '...'} • ${userData?.trainingTitle ?? '...'}",
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          // BODY
-          Expanded(
-            child: Transform.translate(
-              offset: const Offset(0, 10),
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF111216),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 40,
-                    horizontal: 16,
+              ),
+
+              // BODY
+              Transform.translate(
+                offset: const Offset(0, 10),
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF111216),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
+                    ),
                   ),
-                  child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Tanggal + Jam
+                        // Time Card
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 18,
-                          ),
+                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
                             color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(30),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Column(
                             children: [
@@ -278,9 +290,10 @@ class _HomePageState extends State<HomePage> {
                                   "EEEE, dd MMM yyyy",
                                   "id_ID",
                                 ).format(DateTime.now()),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 19,
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.7),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: 8),
@@ -288,77 +301,75 @@ class _HomePageState extends State<HomePage> {
                                 _currentTime,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 38,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 48,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: -1,
                                 ),
                               ),
+                              const SizedBox(height: 20),
                               Row(
                                 children: [
-                                  Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 16,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 35,
-                                      vertical: 20,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          latestAttendance?.checkInTime ?? "-",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 30,
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.tealLightCard,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            latestAttendance?.checkInTime ??
+                                                "-",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 28,
+                                            ),
                                           ),
-                                        ),
-                                        const Text(
-                                          "Masuk",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                          const SizedBox(height: 4),
+                                          const Text(
+                                            "Masuk",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  const Spacer(),
-                                  Container(
-                                    margin: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 16,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 35,
-                                      vertical: 20,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Text(
-                                          latestAttendance?.checkOutTime ?? "-",
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 30,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.tealLightCard,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            latestAttendance?.checkOutTime ??
+                                                "-",
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 28,
+                                            ),
                                           ),
-                                        ),
-                                        const Text(
-                                          "Pulang",
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                          const SizedBox(height: 4),
+                                          const Text(
+                                            "Keluar",
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 13,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -367,57 +378,72 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ),
 
-                        const SizedBox(height: 20),
-
-                        // Lokasi Absen
-                        sectionTitle("Lokasi Absen"),
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[900],
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.location_on,
-                                color: Colors.white70,
-                                size: 22,
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  "Jarak dari lokasi: ${_distanceToPpkd.toStringAsFixed(2)} km",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Riwayat Absen
-                        Row(
-                          children: [
-                            sectionTitle("Riwayat Absen"),
-                            const Spacer(),
-                          ],
-                        ),
-
                         const SizedBox(height: 16),
 
+                        // // Location Card
+                        // Container(
+                        //   width: double.infinity,
+                        //   padding: const EdgeInsets.all(20),
+                        //   decoration: BoxDecoration(
+                        //     color: const Color(0xFF1A1D23),
+                        //     borderRadius: BorderRadius.circular(16),
+                        //   ),
+                        //   child: Row(
+                        //     children: [
+                        //       Container(
+                        //         width: 48,
+                        //         height: 48,
+                        //         decoration: BoxDecoration(
+                        //           color: Colors.orange.withOpacity(0.15),
+                        //           borderRadius: BorderRadius.circular(12),
+                        //         ),
+                        //         child: const Icon(
+                        //           Icons.location_on_rounded,
+                        //           color: Colors.orange,
+                        //           size: 24,
+                        //         ),
+                        //       ),
+                        //       const SizedBox(width: 16),
+                        //       Expanded(
+                        //         child: Column(
+                        //           crossAxisAlignment: CrossAxisAlignment.start,
+                        //           children: [
+                        //             const Text(
+                        //               "Jarak dari lokasi",
+                        //               style: TextStyle(
+                        //                 color: Colors.white60,
+                        //                 fontSize: 13,
+                        //                 fontWeight: FontWeight.w500,
+                        //               ),
+                        //             ),
+                        //             const SizedBox(height: 4),
+                        //             Text(
+                        //               "${_distanceToPpkd.toStringAsFixed(2)} km",
+                        //               style: const TextStyle(
+                        //                 color: Colors.white,
+                        //                 fontSize: 18,
+                        //                 fontWeight: FontWeight.w600,
+                        //               ),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
+
+                        // Section Title
+                        sectionTitle("Riwayat Absen"),
+
+                        const SizedBox(height: 16),
+
+                        // Attendance History
                         if (recentAttendances.isNotEmpty)
                           Column(
                             children: recentAttendances.map((attendance) {
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   color: Colors.grey[900],
                                   borderRadius: BorderRadius.circular(16),
@@ -425,18 +451,19 @@ class _HomePageState extends State<HomePage> {
                                 child: Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(12),
+                                      width: 48,
+                                      height: 48,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: Colors.white.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: const Icon(
                                         Icons.event_rounded,
-                                        color: Color(0xFF58C5C8),
+                                        color: AppColors.teal,
                                         size: 24,
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 16),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment:
@@ -448,14 +475,16 @@ class _HomePageState extends State<HomePage> {
                                             ),
                                             style: const TextStyle(
                                               color: Colors.white,
-                                              fontSize: 20,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
                                             ),
                                           ),
+                                          const SizedBox(height: 4),
                                           Text(
                                             attendance.date,
                                             style: const TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 14,
+                                              color: Colors.white60,
+                                              fontSize: 13,
                                             ),
                                           ),
                                         ],
@@ -468,19 +497,20 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: attendance.isLate
-                                            ? const Color(0xFF332F1A)
-                                            : const Color(0xFF122C29),
-                                        borderRadius: BorderRadius.circular(16),
+                                            ? const Color(0xFF3D2F1A)
+                                            : const Color(0xFF1A3D2F),
+                                        borderRadius: BorderRadius.circular(8),
                                       ),
                                       child: Text(
                                         attendance.isLate
                                             ? "Terlambat"
                                             : "Tepat waktu",
                                         style: TextStyle(
-                                          fontWeight: FontWeight.bold,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
                                           color: attendance.isLate
-                                              ? Colors.yellow
-                                              : const Color(0xFF58C5C8),
+                                              ? Colors.orange
+                                              : Colors.greenAccent,
                                         ),
                                       ),
                                     ),
@@ -490,20 +520,46 @@ class _HomePageState extends State<HomePage> {
                             }).toList(),
                           )
                         else
-                          const Text(
-                            "Belum ada data absen minggu ini",
-                            style: TextStyle(color: Colors.white70),
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(32),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(15),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(13),
+                                    ),
+                                    child: Icon(
+                                      Icons.event_available_rounded,
+                                      size: 35,
+                                      color: AppColors.teal,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 20),
+                                  Text(
+                                    "Belum ada absen minggu ini",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-
-                        const SizedBox(height: 500),
+                        const SizedBox(height: 100),
                       ],
                     ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
