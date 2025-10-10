@@ -30,7 +30,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
   // Lokasi PPKD Jakarta Pusat
   final gmaps.LatLng _ppkdLocation = const gmaps.LatLng(-6.210881, 106.812942);
 
-  // ✅ simpan jarak (dalam km)
+  // simpan jarak (dalam km)
   double? _distanceKm;
 
   @override
@@ -360,7 +360,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                       ),
                     ),
                     const SizedBox(height: 30),
-                    // Punch In / Punch Out
+
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
@@ -373,18 +373,18 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                       ),
                       child: Column(
                         children: [
-                          Align(
-                            alignment: Alignment.topLeft,
-                            child: Text(
-                              _hasCheckedIn ? "Keluar" : "Masuk",
-                              style: const TextStyle(
-                                fontSize: 19,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
+                          // Align(
+                          //   alignment: Alignment.topLeft,
+                          //   child: Text(
+                          //     _hasCheckedIn ? "Keluar" : "Masuk",
+                          //     style: const TextStyle(
+                          //       fontSize: 19,
+                          //       color: Colors.white,
+                          //       fontWeight: FontWeight.bold,
+                          //     ),
+                          //   ),
+                          // ),
+                          const SizedBox(height: 40),
                           Center(
                             child: AnimatedBuilder(
                               animation: _pulseAnimation,
@@ -409,27 +409,56 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                             ),
                           ),
                           const SizedBox(height: 40),
-                          // 🔽 Badge status absen
+                          // Badge status absen
+                          // Container(
+                          //   padding: const EdgeInsets.symmetric(
+                          //     horizontal: 12,
+                          //     vertical: 6,
+                          //   ),
+                          //   decoration: BoxDecoration(
+                          //     color: _hasCheckedIn
+                          //         ? const Color(0xFF122C29)
+                          //         : Colors.red.withOpacity(0.2),
+                          //     borderRadius: BorderRadius.circular(16),
+                          //   ),
+                          //   child: Text(
+                          //     _hasCheckedIn ? "Sudah Absen" : "Belum Absen",
+                          //     style: TextStyle(
+                          //       fontWeight: FontWeight.bold,
+                          //       fontSize: 14,
+                          //       color: _hasCheckedIn
+                          //           ? const Color(0xFF58C5C8)
+                          //           : Colors.redAccent,
+                          //     ),
+                          //   ),
+                          // ),
+                          // SizedBox(height: 15),
                           Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
+                            padding: const EdgeInsets.all(15),
                             decoration: BoxDecoration(
-                              color: _hasCheckedIn
-                                  ? const Color(0xFF122C29)
-                                  : Colors.red.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(16),
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(13),
                             ),
-                            child: Text(
-                              _hasCheckedIn ? "Sudah Absen" : "Belum Absen",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: _hasCheckedIn
-                                    ? const Color(0xFF58C5C8)
-                                    : Colors.redAccent,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize
+                                  .min, // biar ukurannya pas isi aja
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.info_outline, // ganti sesuai kebutuhan
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Tahan tombol untuk absen",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

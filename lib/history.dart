@@ -3,12 +3,14 @@ import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
 import 'package:tugas_17_flutter/model/attendance_stats.dart';
+import 'package:tugas_17_flutter/view/widgets/section_title.dart';
 
-// Kalau punya file AppColors, pake AppColors.primary
-class AppColors {
-  static const primary = Color(0xFF58C5C8);
-  static const textPrimary = Colors.black87;
-}
+import 'utils/app_color.dart';
+
+// class AppColors {
+//   static const primary = Color(0xFF58C5C8)
+//   static const textPrimary = Colors.black87;
+// }
 
 class History extends StatefulWidget {
   const History({super.key});
@@ -22,9 +24,8 @@ class _HistoryState extends State<History> {
 
   AttendanceStats? stats;
   List<AttendanceRecord> records = [];
-  bool isLoading = true;
 
-  // Rentang tanggal
+  bool isLoading = true;
   DateTimeRange? _selectedDateRange;
 
   @override
@@ -42,7 +43,6 @@ class _HistoryState extends State<History> {
           'yyyy-MM-dd',
         ).format(_selectedDateRange!.start);
         final end = DateFormat('yyyy-MM-dd').format(_selectedDateRange!.end);
-
         resultRecords = await _attendanceService.getAttendanceHistory(
           startDate: start,
           endDate: end,
@@ -51,7 +51,6 @@ class _HistoryState extends State<History> {
         resultRecords = await _attendanceService.getAttendanceHistory();
       }
 
-      // Hitung statistik
       final hadir = resultRecords.where((r) => r.status == "masuk").length;
       final izin = resultRecords.where((r) => r.status == "izin").length;
       final total = resultRecords.length;
@@ -71,7 +70,6 @@ class _HistoryState extends State<History> {
     }
   }
 
-  /// Pilih rentang tanggal
   Future<void> _pickDateRange() async {
     final dateRange = await showDateRangePicker(
       context: context,
@@ -82,12 +80,12 @@ class _HistoryState extends State<History> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
+              primary: AppColors.teal,
               onPrimary: Colors.white,
-              onSurface: AppColors.textPrimary,
+              onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+              style: TextButton.styleFrom(foregroundColor: AppColors.teal),
             ),
           ),
           child: child!,
@@ -104,6 +102,10 @@ class _HistoryState extends State<History> {
     }
   }
 
+  Future<void> _onRefresh() async {
+    await _loadHistory();
+  }
+
   @override
   Widget build(BuildContext context) {
     String fromDate = _selectedDateRange != null
@@ -115,272 +117,329 @@ class _HistoryState extends State<History> {
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      body: Column(
-        children: [
-          // HEADER
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(30),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        // Judul + ikon kalender
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              "Riwayat",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                onPressed: _pickDateRange,
-                                icon: const Icon(
-                                  Icons.calendar_month_outlined,
-                                  color: Color(
-                                    0xFF58C5C8,
-                                  ), // bisa diganti AppColors.primary
-                                  size: 24,
-                                ),
-                              ),
-                            ),
-                          ],
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.teal),
+            )
+          : SafeArea(
+              child: RefreshIndicator(
+                onRefresh: _onRefresh,
+                color: Colors.white,
+                backgroundColor: Colors.grey[900],
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // HEADER
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
                         ),
-                        const SizedBox(height: 20),
-
-                        // Dari - Sampai
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Column(
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   const Text(
-                                    "Dari : ",
+                                    "Riwayat",
                                     style: TextStyle(
                                       color: Colors.white,
-                                      fontSize: 18,
+                                      fontSize: 25,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      fromDate,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
+                                  const SizedBox(width: 10),
                                 ],
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                              ),
-                              child: Column(
-                                children: const [
-                                  SizedBox(height: 40),
-                                  Text(
-                                    "-",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  const Text(
-                                    "Sampai : ",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey[800],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      toDate,
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                              const SizedBox(height: 20),
 
-          // BODY
-          Expanded(
-            child: Transform.translate(
-              offset: const Offset(0, -10),
-              child: Container(
-                width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF111216),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
-                  ),
-                ),
-
-                child: isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (stats != null)
+                              // Dari - Sampai
                               Container(
                                 width: double.infinity,
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
-                                  color: Colors.grey[900],
+                                  color: const Color(0xFF111216),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: Row(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
-                                      child: _buildBox(
-                                        "${stats!.totalMasuk}",
-                                        "Hadir",
-                                      ),
+                                    Row(
+                                      children: [
+                                        const Text(
+                                          "Periode Waktu",
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const Spacer(),
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            color: AppColors.tealLight,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: IconButton(
+                                            onPressed: _pickDateRange,
+                                            icon: const Icon(
+                                              Icons.calendar_month_outlined,
+                                              color: AppColors.teal,
+                                              size: 24,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildBox(
-                                        "${stats!.totalIzin}",
-                                        "Izin",
-                                      ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: _buildBox(
-                                        "${stats!.totalAbsen}",
-                                        "Total",
-                                      ),
+                                    const SizedBox(height: 8),
+
+                                    // Row: Dari → Icon → Sampai
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.tealCard,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            child: _buildDateBox(
+                                              "Dari :",
+                                              fromDate,
+                                            ),
+                                          ),
+                                        ),
+
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 15,
+                                          ),
+                                          child: Column(
+                                            children: [
+                                              SizedBox(height: 40),
+                                              Icon(
+                                                Icons.arrow_forward,
+                                                color: Colors.white,
+                                                size: 24,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        Expanded(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.tealCard,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            child: _buildDateBox(
+                                              "Sampai :",
+                                              toDate,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
                               ),
-                            const SizedBox(height: 30),
+                            ],
+                          ),
+                        ),
+                      ),
 
-                            const Text(
-                              "Riwayat Absensi",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
+                      // BODY
+                      Transform.translate(
+                        offset: const Offset(0, 10),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF111216),
+                            borderRadius: BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
                             ),
-                            const SizedBox(height: 16),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 24,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (stats != null)
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[900],
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
 
-                            if (records.isEmpty)
-                              const Center(
-                                child: Text(
-                                  "Belum ada data absensi",
-                                  style: TextStyle(color: Colors.white70),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        "Statistik",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildBox(
+                                              "${stats!.totalMasuk}",
+                                              "Hadir",
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _buildBox(
+                                              "${stats!.totalIzin}",
+                                              "Izin",
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _buildBox(
+                                              "${stats!.totalAbsen}",
+                                              "Total",
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              )
-                            else
-                              Column(
-                                children: records.map((record) {
-                                  final statusLabel = record.status == "izin"
-                                      ? "Izin"
-                                      : record.status == "masuk"
-                                      ? "Masuk"
-                                      : "Pulang";
+                              const SizedBox(height: 30),
 
-                                  final timeStatus = record.isLate
-                                      ? "Terlambat"
-                                      : record.status == "izin"
-                                      ? record.alasanIzin ?? "-"
-                                      : "Tepat Waktu";
+                              sectionTitle("Riwayat Absen"),
+                              const SizedBox(height: 16),
 
-                                  return Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: _buildHistoryCard(
+                              if (records.isEmpty)
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(32),
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(15),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white.withOpacity(
+                                              0.08,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              13,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.event_available_rounded,
+                                            size: 38,
+                                            color: AppColors.teal,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 18),
+                                        Text(
+                                          "Belum ada data absensi",
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey.shade700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                ListView.builder(
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  shrinkWrap: true,
+                                  itemCount: records.length,
+                                  itemBuilder: (context, index) {
+                                    final record = records[index];
+                                    final statusLabel = record.status == "izin"
+                                        ? "Izin"
+                                        : record.status == "masuk"
+                                        ? "Masuk"
+                                        : "Pulang";
+                                    final timeStatus = record.isLate
+                                        ? "Terlambat"
+                                        : "Tepat Waktu";
+                                    return _buildHistoryCard(
                                       statusLabel,
                                       "${record.day}, ${record.date}",
                                       timeStatus,
                                       record.isLate,
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            const SizedBox(height: 100),
-                          ],
+                                    );
+                                  },
+                                ),
+
+                              const SizedBox(height: 150),
+                            ],
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 
-  // Statistik box
+  Widget _buildDateBox(String title, String date) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.tealLight,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            date,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildBox(String value, String label) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[800],
+        color: AppColors.tealLightCard,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -406,7 +465,6 @@ class _HistoryState extends State<History> {
     );
   }
 
-  // Kartu riwayat
   Widget _buildHistoryCard(
     String status,
     String date,
@@ -414,9 +472,8 @@ class _HistoryState extends State<History> {
     bool isLate,
   ) {
     return Container(
-      height: 90,
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.grey[900],
         borderRadius: BorderRadius.circular(16),
@@ -425,37 +482,58 @@ class _HistoryState extends State<History> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: AppColors.tealLight,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(
               Icons.event_rounded,
-              color: AppColors.primary,
+              color: AppColors.teal,
               size: 24,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   status,
-                  style: const TextStyle(color: Colors.white, fontSize: 20),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 4),
                 Text(
                   date,
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
+                  style: const TextStyle(color: Colors.white70, fontSize: 13),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          // 👉 badge waktu (terlambat/tepat waktu/alasan izin) bisa ditambahkan lagi kalau perlu
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: isLate
+                  ? Colors.redAccent.withOpacity(0.15)
+                  : Colors.greenAccent.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              timeStatus,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: isLate ? Colors.redAccent : Colors.greenAccent,
+              ),
+            ),
+          ),
         ],
       ),
     );

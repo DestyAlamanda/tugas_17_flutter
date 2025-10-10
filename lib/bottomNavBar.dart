@@ -32,12 +32,13 @@ class _BottomNavigatorState extends State<BottomNavigator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF111216),
-      body: _pages[_selectedIndex],
+      backgroundColor: const Color(0xFF111216),
+      // ✅ Gunakan IndexedStack agar state halaman tetap terjaga
+      body: IndexedStack(index: _selectedIndex, children: _pages),
 
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        backgroundColor: Color(0xFF58C5C8),
+        backgroundColor: const Color(0xFF58C5C8),
         shape: const CircleBorder(),
         onPressed: () {
           Navigator.push(
@@ -45,7 +46,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
             MaterialPageRoute(builder: (_) => const GoogleMapsScreen()),
           );
         },
-        child: Icon(Icons.fingerprint, size: 40, color: Colors.white),
+        child: const Icon(Icons.fingerprint, size: 40, color: Colors.white),
       ),
 
       bottomNavigationBar: BottomAppBar(
@@ -57,16 +58,13 @@ class _BottomNavigatorState extends State<BottomNavigator> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              // Kiri
               _buildTabItem(index: 0, icon: Icons.home, label: "Home"),
               _buildTabItem(
                 index: 1,
                 icon: Icons.history_rounded,
                 label: "Riwayat",
               ),
-
               const SizedBox(width: 48), // ruang untuk FAB
-              // Kanan
               _buildTabItem(
                 index: 2,
                 icon: Icons.calendar_month,
@@ -97,7 +95,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isSelected ? Color(0xFF58C5C8) : Colors.grey,
+              color: isSelected ? const Color(0xFF58C5C8) : Colors.grey,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),

@@ -21,7 +21,7 @@ class AppColors {
 
   static const redError = Color(0xFFEE6767);
 
-  static const gray = Color(0xFF88888a);
+  static const grey = Color(0xFF88888a);
 
   static const darkCard = Color(0xFF202229);
   static const darkBlue = Color(0xFF0E1D34);
