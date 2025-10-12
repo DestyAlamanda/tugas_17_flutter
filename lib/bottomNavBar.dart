@@ -14,28 +14,34 @@ class BottomNavigator extends StatefulWidget {
 
 class _BottomNavigatorState extends State<BottomNavigator> {
   int _selectedIndex = 0;
-
+  final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
   late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-    _pages = const [HomePage(), History(), IzinPage(), ProfilePage()];
+    _pages = [
+      HomePage(key: _homeKey),
+      const History(),
+      const IzinPage(),
+      const ProfilePage(),
+    ];
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    if (index == 0) {
+      _homeKey.currentState?.refreshData();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF111216),
-      // ✅ Gunakan IndexedStack agar state halaman tetap terjaga
       body: IndexedStack(index: _selectedIndex, children: _pages),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFF58C5C8),
@@ -48,7 +54,6 @@ class _BottomNavigatorState extends State<BottomNavigator> {
         },
         child: const Icon(Icons.fingerprint, size: 40, color: Colors.white),
       ),
-
       bottomNavigationBar: BottomAppBar(
         color: Colors.grey[900],
         shape: const CircularNotchedRectangle(),
@@ -58,19 +63,15 @@ class _BottomNavigatorState extends State<BottomNavigator> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildTabItem(index: 0, icon: Icons.home, label: "Home"),
-              _buildTabItem(
+              _buildTab(index: 0, icon: Icons.home, label: "Home"),
+              _buildTab(
                 index: 1,
                 icon: Icons.history_rounded,
                 label: "Riwayat",
               ),
-              const SizedBox(width: 48), // ruang untuk FAB
-              _buildTabItem(
-                index: 2,
-                icon: Icons.calendar_month,
-                label: "Izin",
-              ),
-              _buildTabItem(index: 3, icon: Icons.person, label: "Profile"),
+              const SizedBox(width: 48),
+              _buildTab(index: 2, icon: Icons.calendar_month, label: "Izin"),
+              _buildTab(index: 3, icon: Icons.person, label: "Profile"),
             ],
           ),
         ),
@@ -78,7 +79,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
     );
   }
 
-  Widget _buildTabItem({
+  Widget _buildTab({
     required int index,
     required IconData icon,
     required String label,

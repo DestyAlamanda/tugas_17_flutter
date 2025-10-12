@@ -17,10 +17,10 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  HomePageState createState() => HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class HomePageState extends State<HomePage> {
   User? userData;
   AttendanceRecord? latestAttendance;
   List<AttendanceRecord> recentAttendances = [];
@@ -38,6 +38,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
+    // Timer untuk jam realtime
     Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
@@ -53,10 +54,20 @@ class _HomePageState extends State<HomePage> {
     });
 
     initializeDateFormatting('id_ID', null).then((_) {
-      _loadUserData();
-      _loadRecentAttendances();
-      _getCurrentLocation();
+      _refreshAll();
     });
+  }
+
+  /// 🔄 Fungsi refresh otomatis dari BottomNavigator
+  Future<void> refreshData() async {
+    await _refreshAll();
+  }
+
+  /// 🔁 Fungsi utama untuk refresh manual maupun otomatis
+  Future<void> _refreshAll() async {
+    await _loadUserData();
+    await _loadRecentAttendances();
+    await _getCurrentLocation();
   }
 
   void _resetForNewDay() {
@@ -107,8 +118,8 @@ class _HomePageState extends State<HomePage> {
               id: 0,
               day: DateFormat('EEEE', 'id_ID').format(DateTime.now()),
               date: DateFormat('dd MMM yy', 'id_ID').format(DateTime.now()),
-              checkInTime: "-",
-              checkOutTime: "-",
+              checkInTime: "--:--",
+              checkOutTime: "--:--",
               status: "masuk",
               attendanceDate: DateTime.now(),
             ),
@@ -165,28 +176,35 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(builder: (context) => const GoogleMapsScreen()),
     );
     if (result != null) {
-      await _loadRecentAttendances();
-      await _getCurrentLocation();
+      await _refreshAll();
     }
   }
 
-  String _getAttendanceLabel(String status) {
-    switch (status.toLowerCase()) {
-      case 'masuk':
-        return "Masuk";
-      case 'keluar':
-        return "keluar";
-      case 'izin':
-        return "Izin";
-      default:
-        return status;
+  String _calculateTotalHours(String? checkIn, String? checkOut) {
+    try {
+      if (checkIn == null ||
+          checkOut == null ||
+          checkIn == "--:--" ||
+          checkOut == "--:--") {
+        return "--:--";
+      }
+
+      final format = DateFormat("HH:mm");
+      final start = format.parse(checkIn);
+      final end = format.parse(checkOut);
+      final diff = end.difference(start);
+      final hours = diff.inHours;
+      final minutes = diff.inMinutes.remainder(60);
+
+      return "${hours.toString().padLeft(1, '0')}:${minutes.toString().padLeft(2, '0')}";
+    } catch (_) {
+      return "--:--";
     }
   }
 
-  Future<void> _onRefresh() async {
-    await _loadUserData();
-    await _loadRecentAttendances();
-    await _getCurrentLocation();
+  String formatTime(String? time) {
+    if (time == null || time == "-" || time.isEmpty) return "--:--";
+    return time;
   }
 
   @override
@@ -194,14 +212,13 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.grey[900],
       body: RefreshIndicator(
-        onRefresh: _onRefresh,
+        onRefresh: _refreshAll,
         color: Colors.white,
         backgroundColor: Colors.grey[900],
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             children: [
-              // HEADER
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(20),
@@ -257,8 +274,6 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-
-              // BODY
               Transform.translate(
                 offset: const Offset(0, 10),
                 child: Container(
@@ -275,7 +290,7 @@ class _HomePageState extends State<HomePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Time Card
+                        // Card waktu
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(24),
@@ -310,66 +325,16 @@ class _HomePageState extends State<HomePage> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.tealLightCard,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            latestAttendance?.checkInTime ??
-                                                "-",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 28,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          const Text(
-                                            "Masuk",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    child: _timeCard(
+                                      label: "Masuk",
+                                      time: latestAttendance?.checkInTime,
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.tealLightCard,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            latestAttendance?.checkOutTime ??
-                                                "-",
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 28,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          const Text(
-                                            "Keluar",
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                    child: _timeCard(
+                                      label: "Keluar",
+                                      time: latestAttendance?.checkOutTime,
                                     ),
                                   ),
                                 ],
@@ -377,180 +342,17 @@ class _HomePageState extends State<HomePage> {
                             ],
                           ),
                         ),
-
                         const SizedBox(height: 16),
-
-                        // // Location Card
-                        // Container(
-                        //   width: double.infinity,
-                        //   padding: const EdgeInsets.all(20),
-                        //   decoration: BoxDecoration(
-                        //     color: const Color(0xFF1A1D23),
-                        //     borderRadius: BorderRadius.circular(16),
-                        //   ),
-                        //   child: Row(
-                        //     children: [
-                        //       Container(
-                        //         width: 48,
-                        //         height: 48,
-                        //         decoration: BoxDecoration(
-                        //           color: Colors.orange.withOpacity(0.15),
-                        //           borderRadius: BorderRadius.circular(12),
-                        //         ),
-                        //         child: const Icon(
-                        //           Icons.location_on_rounded,
-                        //           color: Colors.orange,
-                        //           size: 24,
-                        //         ),
-                        //       ),
-                        //       const SizedBox(width: 16),
-                        //       Expanded(
-                        //         child: Column(
-                        //           crossAxisAlignment: CrossAxisAlignment.start,
-                        //           children: [
-                        //             const Text(
-                        //               "Jarak dari lokasi",
-                        //               style: TextStyle(
-                        //                 color: Colors.white60,
-                        //                 fontSize: 13,
-                        //                 fontWeight: FontWeight.w500,
-                        //               ),
-                        //             ),
-                        //             const SizedBox(height: 4),
-                        //             Text(
-                        //               "${_distanceToPpkd.toStringAsFixed(2)} km",
-                        //               style: const TextStyle(
-                        //                 color: Colors.white,
-                        //                 fontSize: 18,
-                        //                 fontWeight: FontWeight.w600,
-                        //               ),
-                        //             ),
-                        //           ],
-                        //         ),
-                        //       ),
-                        //     ],
-                        //   ),
-                        // ),
-
-                        // Section Title
                         sectionTitle("Riwayat Absen"),
-
                         const SizedBox(height: 16),
-
-                        // Attendance History
                         if (recentAttendances.isNotEmpty)
                           Column(
-                            children: recentAttendances.map((attendance) {
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[900],
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 48,
-                                      height: 48,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.event_rounded,
-                                        color: AppColors.teal,
-                                        size: 24,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _getAttendanceLabel(
-                                              attendance.status,
-                                            ),
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            attendance.date,
-                                            style: const TextStyle(
-                                              color: Colors.white60,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: attendance.isLate
-                                            ? const Color(0xFF3D2F1A)
-                                            : const Color(0xFF1A3D2F),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        attendance.isLate
-                                            ? "Terlambat"
-                                            : "Tepat waktu",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 12,
-                                          color: attendance.isLate
-                                              ? Colors.orange
-                                              : Colors.greenAccent,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
+                            children: recentAttendances
+                                .map((a) => _attendanceCard(a))
+                                .toList(),
                           )
                         else
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(32),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(15),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(13),
-                                    ),
-                                    child: Icon(
-                                      Icons.event_available_rounded,
-                                      size: 35,
-                                      color: AppColors.teal,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                  Text(
-                                    "Belum ada absen minggu ini",
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          _emptyHistory(),
                         const SizedBox(height: 100),
                       ],
                     ),
@@ -563,4 +365,198 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  Widget _timeCard({required String label, String? time}) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.tealLightCard,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Text(
+            formatTime(time),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 28,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _attendanceCard(AttendanceRecord a) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[850],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // tanggal
+          Container(
+            width: 90,
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  DateFormat('dd').format(a.attendanceDate!),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    height: 1.0,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  DateFormat(
+                    'EEE',
+                    'id_ID',
+                  ).format(a.attendanceDate!).toUpperCase(),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    _timeInfo("Masuk", a.checkInTime),
+                    const Spacer(),
+                    _timeInfo("Keluar", a.checkOutTime),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  margin: const EdgeInsets.only(top: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      if (a.status == "izin")
+                        Expanded(
+                          child: Text(
+                            "Alasan izin : ${a.alasanIzin ?? '-'}",
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        )
+                      else ...[
+                        Text(
+                          "Total Jam Kerja",
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _calculateTotalHours(a.checkInTime, a.checkOutTime),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _timeInfo(String label, String? time) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
+      ),
+      const SizedBox(height: 2),
+      Text(
+        formatTime(time),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 23,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  );
+
+  Widget _emptyHistory() => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              Icons.event_available_rounded,
+              size: 35,
+              color: AppColors.teal,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Belum ada absen minggu ini",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
