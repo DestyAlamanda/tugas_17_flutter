@@ -46,7 +46,7 @@ class AttendanceRecord {
           ? DateFormat('EEEE', 'id_ID').format(attendanceDate)
           : 'Unknown',
       date: attendanceDate != null
-          ? DateFormat('dd MMM yy', 'id_ID').format(attendanceDate)
+          ? DateFormat('dd MMM yyyy', 'id_ID').format(attendanceDate)
           : 'N/A',
       checkInTime: json['check_in_time'] ?? '-',
       checkOutTime: json['check_out_time'] ?? '-',

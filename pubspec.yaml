@@ -41,6 +41,8 @@ dependencies:
   lottie: null
   pinput: ^4.0.0
   shared_preferences: ^2.2.2
+  month_picker_dialog: ^6.5.0
+
 
 dev_dependencies:
   flutter_test:

@@ -16,6 +16,7 @@ class IzinPage extends StatefulWidget {
 
 class _IzinPageState extends State<IzinPage> {
   DateTime? _selectedDate;
+  DateTime? _filterDate;
   final TextEditingController _alasanController = TextEditingController();
   bool _isLoading = false;
   late Future<List<AttendanceRecord>> _izinFuture;
@@ -87,10 +88,101 @@ class _IzinPageState extends State<IzinPage> {
     }
   }
 
+  // ✅ Custom Month Picker Popup
+  Future<void> _pickMonthFilter() async {
+    final selected = await showDialog<DateTime>(
+      context: context,
+      builder: (context) {
+        int selectedYear = DateTime.now().year;
+        int selectedMonth = DateTime.now().month;
+
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            "Pilih Bulan & Tahun",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: StatefulBuilder(
+            builder: (context, setStateDialog) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<int>(
+                    value: selectedMonth,
+                    dropdownColor: Colors.grey[900],
+                    iconEnabledColor: Colors.white,
+                    style: const TextStyle(color: Colors.white),
+                    items: List.generate(12, (i) {
+                      return DropdownMenuItem(
+                        value: i + 1,
+                        child: Text(
+                          DateFormat.MMMM('id_ID').format(DateTime(0, i + 1)),
+                        ),
+                      );
+                    }),
+                    onChanged: (val) =>
+                        setStateDialog(() => selectedMonth = val ?? 1),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButton<int>(
+                    value: selectedYear,
+                    dropdownColor: Colors.grey[900],
+                    iconEnabledColor: Colors.white,
+                    style: const TextStyle(color: Colors.white),
+                    items: List.generate(6, (i) {
+                      final year = DateTime.now().year - 3 + i;
+                      return DropdownMenuItem(
+                        value: year,
+                        child: Text(year.toString()),
+                      );
+                    }),
+                    onChanged: (val) =>
+                        setStateDialog(() => selectedYear = val ?? 2024),
+                  ),
+                ],
+              );
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                "Batal",
+                style: TextStyle(color: Colors.grey, fontSize: 15),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.teal,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              onPressed: () {
+                Navigator.pop(context, DateTime(selectedYear, selectedMonth));
+              },
+              child: const Text(
+                "Pilih",
+                style: TextStyle(color: Colors.white, fontSize: 15),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (selected != null) {
+      setState(() => _filterDate = selected);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String tanggalIzin = _selectedDate != null
-        ? DateFormat('dd MMM yyyy').format(_selectedDate!)
+        ? DateFormat('dd MMM yyyy', 'id_ID').format(_selectedDate!)
         : "Pilih tanggal izin";
 
     return Scaffold(
@@ -171,6 +263,7 @@ class _IzinPageState extends State<IzinPage> {
                                       prefixIcon: const Icon(
                                         Icons.calendar_today,
                                         color: Colors.white54,
+                                        size: 25,
                                       ),
                                     ),
                                   ),
@@ -191,6 +284,7 @@ class _IzinPageState extends State<IzinPage> {
                                   prefixIcon: const Icon(
                                     Icons.edit_note_rounded,
                                     color: Colors.white54,
+                                    size: 40,
                                   ),
                                 ),
                                 const SizedBox(height: 24),
@@ -206,7 +300,21 @@ class _IzinPageState extends State<IzinPage> {
                           ),
 
                           const SizedBox(height: 30),
-                          sectionTitle("Riwayat Izin"),
+
+                          // 🔽 Riwayat + Filter
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              sectionTitle("Riwayat Izin"),
+                              IconButton(
+                                onPressed: _pickMonthFilter,
+                                icon: const Icon(
+                                  Icons.filter_list,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 16),
 
                           // 📜 Riwayat
@@ -231,19 +339,28 @@ class _IzinPageState extends State<IzinPage> {
                                 return _emptyHistory();
                               }
 
-                              final izinList =
-                                  snapshot.data!
-                                      .where(
-                                        (r) => r.status.toLowerCase() == 'izin',
-                                      )
-                                      .toList()
-                                    ..sort((a, b) {
-                                      final dateA =
-                                          a.attendanceDate ?? DateTime(1900);
-                                      final dateB =
-                                          b.attendanceDate ?? DateTime(1900);
-                                      return dateB.compareTo(dateA);
-                                    });
+                              var izinList = snapshot.data!
+                                  .where(
+                                    (r) => r.status.toLowerCase() == 'izin',
+                                  )
+                                  .toList();
+
+                              if (_filterDate != null) {
+                                izinList = izinList.where((r) {
+                                  final date = r.attendanceDate;
+                                  return date != null &&
+                                      date.month == _filterDate!.month &&
+                                      date.year == _filterDate!.year;
+                                }).toList();
+                              }
+
+                              izinList.sort((a, b) {
+                                final dateA =
+                                    a.attendanceDate ?? DateTime(1900);
+                                final dateB =
+                                    b.attendanceDate ?? DateTime(1900);
+                                return dateB.compareTo(dateA);
+                              });
 
                               if (izinList.isEmpty) return _emptyHistory();
 
@@ -287,12 +404,38 @@ class _IzinPageState extends State<IzinPage> {
                                                   fontSize: 16,
                                                 ),
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                "Alasan: ${izin.alasanIzin ?? '-'}",
-                                                style: TextStyle(
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8,
+                                                    ),
+                                                margin: const EdgeInsets.only(
+                                                  top: 8,
+                                                ),
+                                                decoration: BoxDecoration(
                                                   color: Colors.white
-                                                      .withOpacity(0.7),
+                                                      .withOpacity(0.05),
+                                                  borderRadius:
+                                                      BorderRadius.circular(10),
+                                                ),
+                                                child: Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        "Alasan izin : ${izin.alasanIzin ?? '-'}",
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                          color: Colors.white
+                                                              .withOpacity(0.7),
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             ],
