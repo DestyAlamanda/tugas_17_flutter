@@ -7,8 +7,10 @@ class CustomTextFormField extends StatelessWidget {
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
   final bool obscureText;
-  final Widget? prefixIcon; // opsional
-  final Widget? suffixIcon; // untuk password
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
+  final int maxLines;
+  final TextStyle? hintStyle;
 
   const CustomTextFormField({
     super.key,
@@ -19,6 +21,8 @@ class CustomTextFormField extends StatelessWidget {
     this.obscureText = false,
     this.prefixIcon,
     this.suffixIcon,
+    this.maxLines = 1,
+    this.hintStyle,
   });
 
   @override
@@ -28,11 +32,12 @@ class CustomTextFormField extends StatelessWidget {
       style: const TextStyle(color: Colors.white),
       keyboardType: keyboardType,
       obscureText: obscureText,
+      maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(color: Colors.white54),
-        prefixIcon: prefixIcon, // ditambahkan
-        suffixIcon: suffixIcon, // ditambahkan
+        hintStyle: hintStyle ?? const TextStyle(color: Colors.white54),
+        prefixIcon: prefixIcon,
+        suffixIcon: suffixIcon,
         enabledBorder: const UnderlineInputBorder(
           borderSide: BorderSide(color: AppColors.teal),
         ),

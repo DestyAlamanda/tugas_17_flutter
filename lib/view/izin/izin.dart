@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tugas_17_flutter/api/attendance_api.dart';
 import 'package:tugas_17_flutter/model/attendace_record.dart';
+import 'package:tugas_17_flutter/utils/app_color.dart';
 import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
 import 'package:tugas_17_flutter/view/widgets/custom_text_form_field.dart';
-
-class AppColors {
-  static const primary = Color(0xFF58C5C8);
-  static const textPrimary = Colors.black87;
-}
+import 'package:tugas_17_flutter/view/widgets/section_title.dart';
 
 class IzinPage extends StatefulWidget {
   const IzinPage({super.key});
@@ -17,27 +14,16 @@ class IzinPage extends StatefulWidget {
   State<IzinPage> createState() => _IzinPageState();
 }
 
-class _IzinPageState extends State<IzinPage>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _IzinPageState extends State<IzinPage> {
   DateTime? _selectedDate;
   final TextEditingController _alasanController = TextEditingController();
   bool _isLoading = false;
-
   late Future<List<AttendanceRecord>> _izinFuture;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
     _izinFuture = AttendanceService().getAttendanceHistory();
-  }
-
-  @override
-  void dispose() {
-    _tabController.dispose();
-    _alasanController.dispose();
-    super.dispose();
   }
 
   Future<void> _pickDate() async {
@@ -50,13 +36,10 @@ class _IzinPageState extends State<IzinPage>
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: AppColors.primary, // header & tombol OK
-              onPrimary: Colors.white, // teks di header
-              surface: Color(0xFF1E1E1E), // background dialog
-              onSurface: Colors.white, // teks tanggal
-            ),
-            dialogTheme: DialogThemeData(
-              backgroundColor: const Color(0xFF111216),
+              primary: AppColors.teal,
+              onPrimary: Colors.white,
+              surface: Color(0xFF1E1E1E),
+              onSurface: Colors.white,
             ),
           ),
           child: child!,
@@ -92,13 +75,9 @@ class _IzinPageState extends State<IzinPage>
 
       _alasanController.clear();
       _selectedDate = null;
-
-      // refresh tab riwayat
       setState(() {
         _izinFuture = AttendanceService().getAttendanceHistory();
       });
-
-      _tabController.animateTo(1);
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -116,206 +95,260 @@ class _IzinPageState extends State<IzinPage>
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
-      body: Column(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(30),
-              child: Center(
-                child: Text(
-                  "Halaman Izin",
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF111216),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(30),
-                  topRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                children: [
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: AppColors.primary,
-                    unselectedLabelColor: Colors.grey,
-                    indicatorColor: AppColors.primary,
-                    indicatorWeight: 3,
-                    tabs: const [
-                      Tab(
-                        icon: Icon(Icons.add_circle_outline),
-                        text: "Ajukan Izin",
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            setState(() {
+              _izinFuture = AttendanceService().getAttendanceHistory();
+            });
+          },
+          color: Colors.white,
+          backgroundColor: Colors.grey[900],
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🏷 Header
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Text(
+                      "Halaman Izin",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
                       ),
-                      Tab(icon: Icon(Icons.history_rounded), text: "Riwayat"),
-                    ],
-                  ),
-                  Expanded(
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        // TAB 1 - Ajukan Izin
-                        SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Tanggal Izin",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              GestureDetector(
-                                onTap: _pickDate,
-                                child: AbsorbPointer(
-                                  child: CustomTextFormField(
-                                    controller: TextEditingController(
-                                      text: tanggalIzin,
-                                    ),
-                                    hintText: "Pilih tanggal izin",
-                                    prefixIcon: const Icon(
-                                      Icons.calendar_today,
-                                      color: Colors.white54,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              const Text(
-                                "Alasan",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              CustomTextFormField(
-                                controller: _alasanController,
-                                hintText: "Tuliskan alasan izin...",
-                                keyboardType: TextInputType.multiline,
-                                prefixIcon: const Icon(
-                                  Icons.edit_note_rounded,
-                                  color: Colors.white54,
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                              CustomButton(
-                                onPressed: _isLoading ? null : _kirimIzin,
-                                label: _isLoading
-                                    ? "Mengirim..."
-                                    : "Kirim Izin",
-                                isLoading: _isLoading,
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // TAB 2 - Riwayat Izin
-                        FutureBuilder<List<AttendanceRecord>>(
-                          future: _izinFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                ConnectionState.waiting) {
-                              return const Center(
-                                child: CircularProgressIndicator(),
-                              );
-                            } else if (snapshot.hasError) {
-                              return Center(
-                                child: Text("Error: ${snapshot.error}"),
-                              );
-                            } else if (!snapshot.hasData ||
-                                snapshot.data!.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  "Belum ada data izin",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              );
-                            }
-
-                            // filter hanya status izin
-                            final izinList = snapshot.data!
-                                .where((r) => r.status.toLowerCase() == 'izin')
-                                .toList();
-
-                            // sort terbaru dulu
-                            izinList.sort((a, b) {
-                              final dateA = a.attendanceDate ?? DateTime(1900);
-                              final dateB = b.attendanceDate ?? DateTime(1900);
-                              return dateB.compareTo(dateA);
-                            });
-
-                            if (izinList.isEmpty) {
-                              return const Center(
-                                child: Text(
-                                  "Belum ada data izin",
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              );
-                            }
-
-                            return ListView.builder(
-                              padding: const EdgeInsets.all(20),
-                              itemCount: izinList.length,
-                              itemBuilder: (context, index) {
-                                final izin = izinList[index];
-                                return Card(
-                                  color: Colors.grey[850],
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: ListTile(
-                                    leading: Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Icon(
-                                        Icons.event_rounded,
-                                        color: Color(0xFF58C5C8),
-                                        size: 24,
-                                      ),
-                                    ),
-                                    title: Text(
-                                      "${izin.day}, ${izin.date}",
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    subtitle: Text(
-                                      "Alasan: ${izin.alasanIzin ?? '-'}",
-                                      style: const TextStyle(
-                                        color: Colors.white70,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                // Body utama
+                Transform.translate(
+                  offset: const Offset(0, 10),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF111216),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(30),
+                        topRight: Radius.circular(30),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 32, 20, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          sectionTitle("Ajukan Izin"),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[900],
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  "Tanggal Izin",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                GestureDetector(
+                                  onTap: _pickDate,
+                                  child: AbsorbPointer(
+                                    child: CustomTextFormField(
+                                      controller: TextEditingController(
+                                        text: tanggalIzin,
+                                      ),
+                                      hintText: "Pilih tanggal izin",
+                                      prefixIcon: const Icon(
+                                        Icons.calendar_today,
+                                        color: Colors.white54,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                const Text(
+                                  "Alasan",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                CustomTextFormField(
+                                  controller: _alasanController,
+                                  hintText: "Tuliskan alasan izin...",
+                                  keyboardType: TextInputType.multiline,
+                                  prefixIcon: const Icon(
+                                    Icons.edit_note_rounded,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                CustomButton(
+                                  onPressed: _isLoading ? null : _kirimIzin,
+                                  label: _isLoading
+                                      ? "Mengirim..."
+                                      : "Kirim Izin",
+                                  isLoading: _isLoading,
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          const SizedBox(height: 30),
+                          sectionTitle("Riwayat Izin"),
+                          const SizedBox(height: 16),
+
+                          // 📜 Riwayat
+                          FutureBuilder<List<AttendanceRecord>>(
+                            future: _izinFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(30),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text(
+                                  "Error: ${snapshot.error}",
+                                  style: const TextStyle(color: Colors.white),
+                                );
+                              } else if (!snapshot.hasData ||
+                                  snapshot.data!.isEmpty) {
+                                return _emptyHistory();
+                              }
+
+                              final izinList =
+                                  snapshot.data!
+                                      .where(
+                                        (r) => r.status.toLowerCase() == 'izin',
+                                      )
+                                      .toList()
+                                    ..sort((a, b) {
+                                      final dateA =
+                                          a.attendanceDate ?? DateTime(1900);
+                                      final dateB =
+                                          b.attendanceDate ?? DateTime(1900);
+                                      return dateB.compareTo(dateA);
+                                    });
+
+                              if (izinList.isEmpty) return _emptyHistory();
+
+                              return Column(
+                                children: izinList.map((izin) {
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[850],
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 70,
+                                          height: 70,
+                                          decoration: BoxDecoration(
+                                            color: AppColors.tealLightCard,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.event_note_rounded,
+                                            color: Colors.white,
+                                            size: 30,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                "${izin.day}, ${izin.date}",
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                "Alasan: ${izin.alasanIzin ?? '-'}",
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withOpacity(0.7),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            },
+                          ),
+
+                          const SizedBox(height: 80),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _emptyHistory() => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(15),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(
+              Icons.event_busy_rounded,
+              size: 35,
+              color: AppColors.teal,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Belum ada data izin",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade700,
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
 }

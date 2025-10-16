@@ -364,7 +364,7 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                               overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                 fontSize: 16,
-                                fontWeight: FontWeight.bold,
+
                                 color: Colors.white,
                                 height: 1.4,
                               ),
@@ -453,6 +453,9 @@ class _GoogleMapsScreenState extends State<GoogleMapsScreen>
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(13),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize
