@@ -71,7 +71,7 @@ class _BottomNavigatorState extends State<BottomNavigator> {
               ),
               const SizedBox(width: 48),
               _buildTab(index: 2, icon: Icons.calendar_month, label: "Izin"),
-              _buildTab(index: 3, icon: Icons.person, label: "Profile"),
+              _buildTab(index: 3, icon: Icons.apps, label: "Lainnya"),
             ],
           ),
         ),

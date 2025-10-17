@@ -245,6 +245,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             context.push(const ForgotPasswordScreen());
                           },
                         ),
+                        _menuItem(
+                          Icons.refresh,
+                          "Reset",
+                          onTap: () {
+                            context.push(const ForgotPasswordScreen());
+                          },
+                        ),
                         // _menuItem(
                         //   Icons.info,
                         //   "Tentang Aplikasi",

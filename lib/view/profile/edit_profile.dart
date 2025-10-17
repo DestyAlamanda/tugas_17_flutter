@@ -21,7 +21,6 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
 
   File? _profileImage;
   bool _isLoading = false;
@@ -32,7 +31,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.currentUser.name);
-    _emailController = TextEditingController(text: widget.currentUser.email);
   }
 
   Future<void> _pickImage() async {
@@ -56,7 +54,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final textResponse = await _authService.updateUserProfile(
         name: _nameController.text,
-        email: _emailController.text,
+        email: widget.currentUser.email, // tetap dikirim, tapi tidak diedit
       );
       successMessage = textResponse['message'];
 
@@ -68,7 +66,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       if (mounted) {
-        // ✅ Tampilkan dialog berhasil
         showDialog(
           context: context,
           barrierDismissible: false,
@@ -85,8 +82,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onLoaded: (composition) {
                     Future.delayed(composition.duration, () {
                       if (mounted) {
-                        Navigator.of(context).pop(); // tutup dialog
-                        Navigator.of(context).pop(true); // balik ke ProfilePage
+                        Navigator.of(context).pop();
+                        Navigator.of(context).pop(true);
                       }
                     });
                   },
@@ -103,7 +100,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        // ❌ Tampilkan dialog gagal
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -152,7 +148,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             },
           ),
           title: const Text(
-            'Edit Profil',
+            'Profil',
             style: TextStyle(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.bold,
@@ -212,7 +208,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: const Icon(Icons.person, size: 50, color: Colors.grey),
             ),
           ),
-          const SizedBox(height: 8),
           TextButton.icon(
             onPressed: _pickImage,
             icon: const Icon(
@@ -232,30 +227,107 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _buildFormFields() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Nama",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        // Nama Lengkap
         CustomTextFormField(
           controller: _nameController,
           hintText: 'Nama Lengkap',
           prefixIcon: const Icon(Icons.person_outline, color: Colors.white),
           validator: (v) => v!.isEmpty ? 'Nama tidak boleh kosong' : null,
         ),
-        const SizedBox(height: 16),
-        CustomTextFormField(
-          controller: _emailController,
-          hintText: 'Email',
-          keyboardType: TextInputType.emailAddress,
-          prefixIcon: const Icon(Icons.email_outlined, color: Colors.white),
-          validator: (v) {
-            if (v == null || v.isEmpty) {
-              return 'Email tidak boleh kosong';
-            }
-            if (!RegExp(r'\S+@\S+\.\S+').hasMatch(v)) {
-              return 'Format email tidak valid';
-            }
-            return null;
-          },
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Email",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        // Email (tampil, tapi tidak bisa diedit)
+        _buildStaticField(
+          'Email',
+          widget.currentUser.email,
+          Icons.email_outlined,
+        ),
+
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Jenis Kelamin",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        _buildStaticField(
+          'Jenis Kelamin',
+          widget.currentUser.jenisKelamin == 'L'
+              ? 'Laki-laki'
+              : widget.currentUser.jenisKelamin == 'P'
+              ? 'Perempuan'
+              : '-',
+          Icons.wc,
+        ),
+
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Batch",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        _buildStaticField(
+          'Batch',
+          widget.currentUser.batchKe ?? '-',
+          Icons.group,
+        ),
+        const SizedBox(height: 20),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "Jurusan",
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+        _buildStaticField(
+          'Jurusan',
+          widget.currentUser.trainingTitle ?? '-',
+          Icons.school,
         ),
       ],
+    );
+  }
+
+  Widget _buildStaticField(String label, String value, IconData icon) {
+    return AbsorbPointer(
+      child: CustomTextFormField(
+        controller: TextEditingController(text: value),
+        hintText: label,
+        prefixIcon: Icon(icon, color: Colors.white),
+      ),
     );
   }
 }
