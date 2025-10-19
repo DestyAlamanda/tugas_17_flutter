@@ -5,10 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
+import 'package:tugas_17_flutter/extensions/navigator.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
 import 'package:tugas_17_flutter/utils/app_color.dart';
+import 'package:tugas_17_flutter/view/profile/edit_nama.dart';
 import 'package:tugas_17_flutter/view/widgets/custom_button.dart';
 import 'package:tugas_17_flutter/view/widgets/custom_text_form_field.dart';
+import 'package:tugas_17_flutter/view/widgets/section_title.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final User currentUser;
@@ -33,6 +36,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.currentUser.name);
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
@@ -54,7 +63,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final textResponse = await _authService.updateUserProfile(
         name: _nameController.text,
-        email: widget.currentUser.email, // tetap dikirim, tapi tidak diedit
+        email: widget.currentUser.email,
       );
       successMessage = textResponse['message'];
 
@@ -162,11 +171,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             key: _formKey,
             child: Column(
               children: [
-                const SizedBox(height: 20),
                 _buildProfilePicker(),
-                const SizedBox(height: 32),
+                const SizedBox(height: 15),
                 _buildFormFields(),
-                const SizedBox(height: 40),
+                const SizedBox(height: 25),
                 CustomButton(
                   label: "Simpan Perubahan",
                   isLoading: _isLoading,
@@ -229,93 +237,131 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Nama",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        // === Bagian Profil Saya ===
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            sectionTitle("Profil Saya"),
+            IconButton(
+              icon: const Icon(Icons.edit, color: Colors.white),
+              onPressed: () async {
+                final newName = await context.push(
+                  EditNama(currentName: _nameController.text),
+                );
+                if (newName != null && newName is String) {
+                  setState(() {
+                    _nameController.text = newName;
+                  });
+                }
+              },
             ),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        // Nama Lengkap
-        CustomTextFormField(
-          controller: _nameController,
-          hintText: 'Nama Lengkap',
-          prefixIcon: const Icon(Icons.person_outline, color: Colors.white),
-          validator: (v) => v!.isEmpty ? 'Nama tidak boleh kosong' : null,
-        ),
-        const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Email",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Nama",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              AbsorbPointer(
+                child: CustomTextFormField(
+                  controller: _nameController,
+                  hintText: 'Nama Lengkap',
+                  prefixIcon: const Icon(
+                    Icons.person_outline,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Email",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildStaticField(
+                'Email',
+                widget.currentUser.email,
+                Icons.email_outlined,
+              ),
+            ],
           ),
-        ),
-        // Email (tampil, tapi tidak bisa diedit)
-        _buildStaticField(
-          'Email',
-          widget.currentUser.email,
-          Icons.email_outlined,
         ),
 
-        const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Jenis Kelamin",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-        _buildStaticField(
-          'Jenis Kelamin',
-          widget.currentUser.jenisKelamin == 'L'
-              ? 'Laki-laki'
-              : widget.currentUser.jenisKelamin == 'P'
-              ? 'Perempuan'
-              : '-',
-          Icons.wc,
-        ),
+        const SizedBox(height: 24),
 
-        const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Batch",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+        // === Bagian Informasi Lainnya ===
+        sectionTitle("Informasi Lainnya"),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        _buildStaticField(
-          'Batch',
-          widget.currentUser.batchKe ?? '-',
-          Icons.group,
-        ),
-        const SizedBox(height: 20),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: Text(
-            "Jurusan",
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Jenis Kelamin",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildStaticField(
+                'Jenis Kelamin',
+                widget.currentUser.jenisKelamin == 'L'
+                    ? 'Laki-laki'
+                    : widget.currentUser.jenisKelamin == 'P'
+                    ? 'Perempuan'
+                    : '-',
+                Icons.wc,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Batch",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildStaticField(
+                'Batch',
+                widget.currentUser.batchKe ?? '-',
+                Icons.group,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Jurusan",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _buildStaticField(
+                'Jurusan',
+                widget.currentUser.trainingTitle ?? '-',
+                Icons.school,
+              ),
+            ],
           ),
-        ),
-        _buildStaticField(
-          'Jurusan',
-          widget.currentUser.trainingTitle ?? '-',
-          Icons.school,
         ),
       ],
     );
