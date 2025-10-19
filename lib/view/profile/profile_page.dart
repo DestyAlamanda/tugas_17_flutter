@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:tugas_17_flutter/api/auth_api.dart';
 import 'package:tugas_17_flutter/extensions/navigator.dart';
 import 'package:tugas_17_flutter/model/user_model.dart';
+import 'package:tugas_17_flutter/utils/app_color.dart';
 import 'package:tugas_17_flutter/utils/shared_preference.dart';
 import 'package:tugas_17_flutter/view/auth/login_screen.dart';
 import 'package:tugas_17_flutter/view/password/forgot_password.dart';
 import 'package:tugas_17_flutter/view/profile/edit_profile.dart';
+import 'package:tugas_17_flutter/view/profile/pengaturan.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -24,7 +26,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _loadUserData();
   }
 
-  // Load user profile
+  // 🔹 Load user profile
   Future<void> _loadUserData() async {
     try {
       final savedUser = await _authService.getUserProfile();
@@ -45,7 +47,7 @@ class _ProfilePageState extends State<ProfilePage> {
   static void handleLogout(BuildContext context) async {
     await PreferenceHandler.removeLogin();
 
-    // Tampilkan snackbar
+    // Snackbar konfirmasi
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text("✅ Berhasil keluar dari akun"),
@@ -95,8 +97,8 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               onPressed: () {
-                Navigator.pop(context); // tutup dialog
-                handleLogout(context); // lanjut logout
+                Navigator.pop(context);
+                handleLogout(context);
               },
               child: const Text(
                 "Ya, Keluar",
@@ -109,34 +111,38 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Reusable menu item
+  // 🔹 Reusable Menu Item
   Widget _menuItem(IconData icon, String title, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: Colors.white, size: 24),
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 15),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 22),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppColors.teal,
+                  size: 26,
+                ),
+              ],
             ),
-            const SizedBox(width: 16),
-            Text(
-              title,
-              style: const TextStyle(color: Colors.white, fontSize: 16),
-            ),
-          ],
-        ),
+          ),
+          Divider(color: AppColors.teal, thickness: 1, height: 1),
+        ],
       ),
     );
   }
@@ -147,7 +153,7 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: Colors.grey[900],
       body: Column(
         children: [
-          // HEADER
+          // 🔹 Header Profil
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(30),
@@ -167,13 +173,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           )
                         : null,
                   ),
-
                   const SizedBox(height: 14),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Text(
-                        " ${userData?.name ?? '...'}",
+                        userData?.name ?? '...',
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -182,7 +187,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        "${userData?.email ?? '...'} ",
+                        userData?.email ?? '...',
                         style: const TextStyle(
                           fontSize: 16,
                           color: Colors.white70,
@@ -195,7 +200,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
-          // BODY
+          // 🔹 Body Section
           Expanded(
             child: Transform.translate(
               offset: const Offset(0, -10),
@@ -217,57 +222,60 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _menuItem(
-                          Icons.edit,
-                          "Edit Profile",
-                          onTap: () async {
-                            if (userData != null) {
-                              final result = await context.push(
-                                EditProfileScreen(
-                                  currentUser: userData!, // gunakan userData
-                                ),
-                              );
-
-                              if (result == true) {
-                                // reload data user setelah update profile
-                                setState(() {
-                                  _loadUserData();
-                                });
-                              }
-                            }
-                          },
+                        // 🔸 Menu Container
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 20,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[900],
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            children: [
+                              _menuItem(
+                                Icons.person_outlined,
+                                "Profil",
+                                onTap: () async {
+                                  if (userData != null) {
+                                    final result = await context.push(
+                                      EditProfileScreen(currentUser: userData!),
+                                    );
+                                    if (result == true) {
+                                      setState(() {
+                                        _loadUserData();
+                                      });
+                                    }
+                                  }
+                                },
+                              ),
+                              _menuItem(
+                                Icons.settings,
+                                "Pengaturan",
+                                onTap: () {
+                                  context.push(const PengaturanAkun());
+                                },
+                              ),
+                              _menuItem(Icons.info_outline, "Tentang Aplikasi"),
+                              _menuItem(
+                                Icons.lock_reset,
+                                "Reset Password",
+                                onTap: () {
+                                  context.push(const ForgotPasswordScreen());
+                                },
+                              ),
+                              _menuItem(
+                                Icons.logout,
+                                "Keluar",
+                                onTap: () {
+                                  _showLogoutDialog(context);
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-
-                        _menuItem(
-                          Icons.refresh,
-                          "Reset",
-                          onTap: () {
-                            context.push(const ForgotPasswordScreen());
-                          },
-                        ),
-                        _menuItem(
-                          Icons.refresh,
-                          "Reset",
-                          onTap: () {
-                            context.push(const ForgotPasswordScreen());
-                          },
-                        ),
-                        // _menuItem(
-                        //   Icons.info,
-                        //   "Tentang Aplikasi",
-                        //   onTap: () {
-                        //     print("➡️ Tentang aplikasi diklik");
-                        //   },
-                        // ),
-                        _menuItem(
-                          Icons.logout,
-                          "Keluar",
-                          onTap: () {
-                            _showLogoutDialog(context);
-                          },
-                        ),
-
-                        const SizedBox(height: 300), // biar bisa discroll
+                        const SizedBox(height: 300),
                       ],
                     ),
                   ),
